@@ -1,3 +1,18 @@
+/*
+  Deprecated / frozen file.
+
+  This file is no longer loaded by:
+  C:\Users\LY\Documents\Codex\2026-04-24\html5-css3\pages\dashboard.html
+
+  Active dashboard scripts now live in:
+  C:\Users\LY\Documents\Codex\2026-04-24\html5-css3\js\dashboard\
+
+  Maintenance rule:
+  1. Do not continue feature development in this file.
+  2. Only edit files under js/dashboard/core and js/dashboard/modules.
+  3. Keep this file temporarily as a rollback reference until the new structure is fully stable.
+*/
+
 if (sessionStorage.getItem("school-admin-auth") !== "true") {
   window.location.href = "./login.html";
 }
