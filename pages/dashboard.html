@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>学校学员课时管理系统</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+  <section class="dashboard">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <div class="brand-mark">艺</div>
+        <div>
+          <h2>课时管理系统</h2>
+          <p>School Admin</p>
+        </div>
+      </div>
+
+      <nav class="menu">
+        <div class="menu-group" data-group="frontdesk">
+          <button class="menu-parent active expanded" type="button" data-parent="frontdesk">
+            <span>前台业务</span>
+            <span class="menu-arrow">▼</span>
+          </button>
+          <div class="submenu">
+            <button class="menu-item" type="button" data-page="enrollment" data-parent-group="frontdesk">新生报名</button>
+          </div>
+        </div>
+
+        <div class="menu-group" data-group="teaching">
+          <button class="menu-parent active expanded" type="button" data-parent="teaching">
+            <span>教学管理</span>
+            <span class="menu-arrow">▼</span>
+          </button>
+          <div class="submenu">
+            <button class="menu-item" type="button" data-page="teacher" data-parent-group="teaching">教师管理</button>
+            <button class="menu-item" type="button" data-page="course" data-parent-group="teaching">课程管理</button>
+            <button class="menu-item" type="button" data-page="class" data-parent-group="teaching">班级管理</button>
+            <button class="menu-item active" type="button" data-page="student" data-parent-group="teaching">学员管理</button>
+            <button class="menu-item" type="button" data-page="session" data-parent-group="teaching">上课管理</button>
+            <button class="menu-item" type="button" data-page="charge" data-parent-group="teaching">收费模式</button>
+          </div>
+        </div>
+
+        <div class="menu-group" data-group="finance">
+          <button class="menu-parent active expanded" type="button" data-parent="finance">
+            <span>财务管理</span>
+            <span class="menu-arrow">▼</span>
+          </button>
+          <div class="submenu">
+            <button class="menu-item" type="button" data-page="transaction" data-parent-group="finance">流水管理</button>
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div>
+          <p class="page-tag" id="pageTag">教学管理</p>
+          <h1 id="pageTitle">学员管理</h1>
+        </div>
+
+        <div class="top-actions">
+          <label class="search-box hidden" id="topSearchBox">
+            <input type="search" id="studentSearch" placeholder="搜索学员姓名" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+            <span>搜索</span>
+          </label>
+          <button class="ghost-btn" type="button" id="logoutBtn">退出登录</button>
+        </div>
+      </header>
+
+      <section class="content-panels">
+        <section class="content-panel active" id="panel-student">
+          <div class="content-grid">
+            <article class="hero-card">
+              <div>
+                <p class="card-tag">学员管理</p>
+                <h2>在读学员总览</h2>
+                <p class="card-desc">查看当前在读学员、续费提醒、班级分布与生日提醒情况。</p>
+                <div class="mini-stats student-mini-stats">
+                  <div class="mini-stat">
+                    <strong id="studentTotalCount">0</strong>
+                    <span>在读学员</span>
+                  </div>
+                  <div class="mini-stat">
+                    <strong id="studentClassCount">0</strong>
+                    <span>开班数量</span>
+                  </div>
+                  <div class="mini-stat">
+                    <strong id="studentBirthdayCount">0</strong>
+                    <span>7天生日提醒</span>
+                  </div>
+                </div>
+              </div>
+              <div class="hero-actions">
+                <button class="primary-btn" type="button" id="viewRenewalBtn">查看续费学员</button>
+                <button class="secondary-btn" type="button" id="openSessionManageBtn">打开上课管理</button>
+              </div>
+            </article>
+
+            <article class="info-card">
+              <p class="card-tag">学员档案</p>
+              <h3>管理说明</h3>
+              <ul class="feature-list">
+                <li>支持查看学员详情、转班、换老师、停课恢复、退费。</li>
+                <li>剩余课时与上课记录联动，删除上课记录会自动恢复对应课时。</li>
+                <li>剩余 4 课时及以下的学员会进入续费提醒。</li>
+                <li>停课学员会被冻结，不能继续划课时；恢复后才可继续记录。</li>
+              </ul>
+            </article>
+
+            <article class="table-card">
+              <div class="section-head">
+                <div>
+                  <p class="card-tag">学员管理</p>
+                  <h3>在读学员列表</h3>
+                </div>
+                <span class="result-count" id="resultCount">0 位学员</span>
+              </div>
+              <div id="studentStatusFilters" class="student-filter-bar"></div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>学员姓名</th>
+                      <th>联系电话</th>
+                      <th>报名课程</th>
+                      <th>报名班级</th>
+                      <th>授课老师</th>
+                      <th>总课时</th>
+                      <th>剩余课时</th>
+                      <th>状态</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="studentTableBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="content-panel" id="panel-enrollment">
+          <article class="panel-card wide-card">
+            <div class="section-head">
+              <div>
+                <h3 id="enrollmentSectionTitle">新生报名管理</h3>
+              </div>
+            </div>
+
+            <div class="business-nav">
+              <button class="business-tab active" type="button" data-business-tab="registration">新生报名</button>
+              <button class="business-tab" type="button" data-business-tab="retail">教材零售</button>
+              <button class="business-tab" type="button" data-business-tab="birthday">学员生日</button>
+              <button class="business-tab" type="button" data-business-tab="today">今日办理</button>
+            </div>
+
+            <div class="business-panel active" id="business-registration">
+              <div class="form-section">
+                <div class="section-head compact-head">
+                  <div>
+                    <h3>报名资料录入</h3>
+                    <p class="form-helper">带 <span class="required-mark">*</span> 的栏目为必填项。课程和班级数据会与课程管理、班级管理保持同步。</p>
+                  </div>
+                </div>
+
+                <div class="form-grid form-grid-3">
+                  <div class="form-field">
+                    <label>报名日期 <span class="required-mark">*</span></label>
+                    <input type="date" id="enrollDateInput">
+                  </div>
+                  <div class="form-field">
+                    <label>学员姓名 <span class="required-mark">*</span></label>
+                    <input type="text" id="studentNameInput" autocomplete="off">
+                  </div>
+                  <div class="form-field">
+                    <label>家长姓名 <span class="required-mark">*</span></label>
+                    <input type="text" id="parentNameInput" autocomplete="off">
+                  </div>
+                  <div class="form-field">
+                    <label>联系电话 <span class="required-mark">*</span></label>
+                    <input type="text" id="parentPhoneInput" autocomplete="off">
+                  </div>
+                  <div class="form-field">
+                    <label>学员年龄 <span class="required-mark">*</span></label>
+                    <input type="number" id="studentAgeInput" min="1">
+                  </div>
+                  <div class="form-field">
+                    <label>出生日期 <span class="required-mark">*</span></label>
+                    <input type="date" id="birthMonthInput">
+                  </div>
+                  <div class="form-field">
+                    <label>报名课程类型 <span class="required-mark">*</span></label>
+                    <select id="courseSelect"></select>
+                  </div>
+                  <div class="form-field">
+                    <label>报名班级 <span class="required-mark">*</span></label>
+                    <select id="classSelect"></select>
+                  </div>
+                  <div class="form-field">
+                    <label>授课老师 <span class="required-mark">*</span></label>
+                    <select id="teacherSelect"></select>
+                  </div>
+                  <div class="form-field">
+                    <label>报名课时包 <span class="required-mark">*</span></label>
+                    <select id="packageSelect"></select>
+                  </div>
+                  <div class="form-field">
+                    <label>赠送课时</label>
+                    <input type="number" id="giftHoursInput" min="0" value="0">
+                  </div>
+                  <div class="form-field">
+                    <label>课时说明</label>
+                    <input type="text" id="packageNoteInput" autocomplete="off">
+                  </div>
+                  <div class="form-field" style="grid-column: 1 / -1;">
+                    <label>备注事项</label>
+                    <textarea id="remarkInput" rows="3"></textarea>
+                  </div>
+                </div>
+
+                <p class="form-helper top-space" id="enrollmentEditHint">当前为新增报名状态，可直接填写后提交。</p>
+                <div class="enrollment-actions">
+                  <button class="primary-btn" type="button" id="saveEnrollmentBtn">提交按钮</button>
+                  <button class="secondary-btn" type="button" id="resetEnrollmentBtn">重置内容</button>
+                </div>
+              </div>
+
+              <div class="section-head">
+                <div>
+                  <h3>今日新生报名记录</h3>
+                </div>
+                <span class="result-count" id="enrollmentCount">0 条记录</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>报名日期</th>
+                      <th>学员姓名</th>
+                      <th>家长姓名</th>
+                      <th>报名课程</th>
+                      <th>报名班级</th>
+                      <th>课时包</th>
+                      <th>赠送课时</th>
+                      <th>授课老师</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="enrollmentTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="business-panel" id="business-retail">
+              <div class="section-head">
+                <div>
+                  <h3>教材零售</h3>
+                  <p class="form-helper">零售记录会自动同步到流水管理中。</p>
+                </div>
+                <button class="primary-btn" type="button" id="addRetailBtn">新增零售</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>销售日期</th>
+                      <th>物品名称</th>
+                      <th>商品分类</th>
+                      <th>数量</th>
+                      <th>单价</th>
+                      <th>销售金额</th>
+                      <th>购买人</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="retailTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="business-panel" id="business-birthday">
+              <div class="section-head">
+                <div>
+                  <h3>学员生日</h3>
+                  <p class="form-helper">仅展示当前日期起 7 天内即将过生日的学员。</p>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>学员姓名</th>
+                      <th>生日日期</th>
+                      <th>班级</th>
+                      <th>备注</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="birthdayTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="business-panel" id="business-today">
+              <div class="section-head">
+                <div>
+                  <h3>今日办理</h3>
+                </div>
+              </div>
+              <div class="form-grid form-grid-3">
+                <div class="form-field">
+                  <label>办理日期</label>
+                  <input type="date" id="todayDateFilter">
+                </div>
+                <div class="form-field">
+                  <label>课程类别</label>
+                  <select id="todayCourseFilter"></select>
+                </div>
+                <div class="form-field align-end">
+                  <div class="inline-actions">
+                    <button class="primary-btn" type="button" id="filterTodayBtn">办理查询</button>
+                    <button class="secondary-btn" type="button" id="resetTodayBtn">清空</button>
+                  </div>
+                </div>
+              </div>
+              <div class="table-wrap top-space">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>办理日期</th>
+                      <th>时间</th>
+                      <th>办理事项</th>
+                      <th>姓名</th>
+                      <th>课程类别</th>
+                      <th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody id="todayTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-panel" id="panel-teacher">
+          <article class="panel-card">
+            <div class="teacher-toolbar">
+              <div>
+                <p class="card-tag">教师管理</p>
+                <h3>教师档案</h3>
+              </div>
+              <div class="inline-actions">
+                <label class="search-box teacher-search-box">
+                  <input type="search" id="teacherSearch" placeholder="搜索教师姓名或电话" autocomplete="off">
+                  <span>搜索</span>
+                </label>
+                <button class="primary-btn" type="button" id="addTeacherBtn">添加教师</button>
+              </div>
+            </div>
+
+            <div class="teacher-list-head hidden" id="teacherListHead">
+              <span class="result-count" id="teacherCount">0 位教师</span>
+            </div>
+            <div class="teacher-empty-state" id="teacherEmptyState">
+              <h4>当前还没有教师信息</h4>
+              <p>点击右上角“添加教师”后，这里会显示已有教师的基本信息卡片。</p>
+            </div>
+            <div class="teacher-card-grid hidden" id="teacherCardList"></div>
+          </article>
+        </section>
+
+        <section class="content-panel" id="panel-course">
+          <article class="panel-card">
+            <div class="section-head">
+              <div>
+                <p class="card-tag">课程管理</p>
+                <h3>课程类型维护</h3>
+                <p class="form-helper">课程类型单独维护，新生报名和教材零售会同步读取这里的课程数据。</p>
+              </div>
+              <button class="primary-btn" type="button" id="courseQuickAddBtn">新建课程</button>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>课程类型</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="courseTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-panel" id="panel-class">
+          <article class="panel-card">
+            <div class="section-head">
+              <div>
+                <p class="card-tag">教学管理</p>
+                <h3>班级管理</h3>
+              </div>
+              <div class="inline-actions">
+                <button class="secondary-btn" type="button" id="addClassTypeBtn">新建班级类型</button>
+                <button class="primary-btn" type="button" id="addClassBtn">新建班级</button>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="section-head compact-head">
+                <div>
+                  <h3>班级设置</h3>
+                  <p class="form-helper">班级名称和班级类型在这里维护，后续新生报名时可以直接选择已创建班级。</p>
+                </div>
+              </div>
+
+              <div class="form-grid class-manager-grid">
+                <div class="form-field">
+                  <label>班级名称</label>
+                  <input type="text" id="newClassInput" placeholder="如：古筝少儿启蒙班" autocomplete="off">
+                </div>
+                <div class="form-field">
+                  <label>班级类型</label>
+                  <select id="classTypeSelect"></select>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>班级名称</th>
+                    <th>班级类型</th>
+                    <th>当前授课老师</th>
+                    <th>在读学员</th>
+                  </tr>
+                </thead>
+                <tbody id="classTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-panel" id="panel-session">
+          <article class="panel-card wide-card">
+            <div class="section-head">
+              <div>
+                <p class="card-tag">上课管理</p>
+                <h3>上课记录</h3>
+                <p class="form-helper">先选择教师，再选择班级，只显示该教师当前名下可上课的学员。</p>
+              </div>
+              <button class="primary-btn" type="button" id="chooseTeacherBtn">选择教师</button>
+            </div>
+
+            <div class="mini-stats">
+              <div class="mini-stat">
+                <strong id="sessionTeacherDisplay">未选择</strong>
+                <span>当前教师</span>
+              </div>
+              <div class="mini-stat">
+                <strong id="sessionAvailableClassCount">0</strong>
+                <span>可上课班级</span>
+              </div>
+              <div class="mini-stat">
+                <strong id="sessionPendingStudentCount">0 / 0</strong>
+                <span>已选学员</span>
+              </div>
+            </div>
+
+            <div class="session-class-toolbar">
+              <span class="session-class-label">教师名下班级</span>
+              <div class="session-class-tabs" id="sessionClassTabs"></div>
+            </div>
+
+            <div class="session-student-panel">
+              <div class="session-student-list" id="sessionStudentList"></div>
+            </div>
+
+            <div class="inline-actions session-action-row">
+              <button class="secondary-btn" type="button" id="sessionSelectAllBtn">全选</button>
+              <button class="secondary-btn" type="button" id="sessionResetBtn">重置</button>
+              <button class="primary-btn" type="button" id="saveSessionBtn">记录上课</button>
+            </div>
+
+            <div class="section-head top-space">
+              <div>
+                <h3>最近上课记录</h3>
+              </div>
+              <span class="result-count" id="sessionRecordCount">0 条记录</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>上课日期</th>
+                    <th>教师</th>
+                    <th>班级</th>
+                    <th>到课人数</th>
+                    <th>记录详情</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="sessionTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-panel" id="panel-charge">
+          <article class="panel-card">
+            <div class="section-head">
+              <div>
+                <p class="card-tag">收费模式</p>
+                <h3>课时包设置</h3>
+              </div>
+            </div>
+            <div class="pricing-grid" id="chargePackageList"></div>
+          </article>
+        </section>
+
+        <section class="content-panel" id="panel-transaction">
+          <article class="panel-card">
+            <div class="section-head">
+              <div>
+                <p class="card-tag">财务管理</p>
+                <h3>流水管理</h3>
+              </div>
+            </div>
+
+            <div class="transaction-filter-bar">
+              <div class="form-field">
+                <label>开始日期</label>
+                <input type="date" id="transactionDateFrom">
+              </div>
+              <div class="form-field">
+                <label>结束日期</label>
+                <input type="date" id="transactionDateTo">
+              </div>
+              <div class="form-field">
+                <label>校区</label>
+                <select id="transactionCampusFilter"></select>
+              </div>
+              <div class="form-field">
+                <label>课程</label>
+                <select id="transactionCourseFilter"></select>
+              </div>
+              <div class="form-field">
+                <label>商品分类</label>
+                <select id="transactionCategoryFilter"></select>
+              </div>
+              <div class="form-field">
+                <label>搜索姓名</label>
+                <input type="search" id="transactionStudentKeyword" autocomplete="off">
+              </div>
+              <div class="form-field">
+                <label>搜索商品名称</label>
+                <input type="search" id="transactionItemKeyword" autocomplete="off">
+              </div>
+              <div class="form-field align-end">
+                <div class="inline-actions">
+                  <button class="primary-btn" type="button" id="filterTransactionBtn">查询</button>
+                  <button class="secondary-btn" type="button" id="resetTransactionBtn">清空</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mini-stats transaction-stats">
+              <div class="mini-stat">
+                <strong id="transactionTotalAmount">0</strong>
+                <span>查询总金额</span>
+              </div>
+              <div class="mini-stat">
+                <strong id="transactionTuitionAmount">0</strong>
+                <span>学费金额</span>
+              </div>
+              <div class="mini-stat">
+                <strong id="transactionRetailAmount">0</strong>
+                <span>销售金额</span>
+              </div>
+              <div class="mini-stat">
+                <strong id="transactionOtherAmount">0</strong>
+                <span>其他金额</span>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>日期</th>
+                    <th>姓名</th>
+                    <th>类型</th>
+                    <th>金额</th>
+                    <th>校区</th>
+                    <th>课程</th>
+                    <th>商品分类</th>
+                    <th>商品名称</th>
+                    <th>备注</th>
+                  </tr>
+                </thead>
+                <tbody id="transactionTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </section>
+    </main>
+  </section>
+
+  <div class="modal hidden" id="renewalModal">
+    <div class="modal-mask" id="modalMask"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3>即将续费学员</h3>
+        </div>
+        <button class="close-btn" type="button" id="closeModalBtn">关闭</button>
+      </div>
+      <div class="modal-list" id="renewalList"></div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="renewalFormModal">
+    <div class="modal-mask" id="renewalFormModalMask"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="renewalFormTitle">学员续费</h3>
+        </div>
+        <button class="close-btn" type="button" id="closeRenewalFormBtn">关闭</button>
+      </div>
+      <div class="form-grid form-grid-3">
+        <div class="form-field">
+          <label>姓名</label>
+          <input type="text" id="renewalStudentName" readonly>
+        </div>
+        <div class="form-field">
+          <label>报名课程</label>
+          <input type="text" id="renewalCourseName" readonly>
+        </div>
+        <div class="form-field">
+          <label>课包</label>
+          <select id="renewalPackageSelect"></select>
+        </div>
+        <div class="form-field">
+          <label>赠送课时</label>
+          <input type="number" id="renewalGiftHoursInput" min="0" value="0">
+        </div>
+        <div class="form-field">
+          <label>应收金额</label>
+          <input type="number" id="renewalReceivableInput" readonly>
+        </div>
+        <div class="form-field">
+          <label>优惠方式</label>
+          <select id="renewalDiscountMode">
+            <option value="discount">%打折</option>
+            <option value="reduce">优惠</option>
+          </select>
+        </div>
+        <div class="form-field" id="renewalDiscountRateField">
+          <label>折扣选择</label>
+          <select id="renewalDiscountRate"></select>
+        </div>
+        <div class="form-field hidden" id="renewalDiscountAmountField">
+          <label>优惠金额</label>
+          <input type="number" id="renewalDiscountAmount" min="0" value="0">
+        </div>
+        <div class="form-field">
+          <label>实收金额</label>
+          <input type="number" id="renewalReceivedInput" readonly>
+        </div>
+        <div class="form-field" style="grid-column: 1 / -1;">
+          <label>备注</label>
+          <textarea id="renewalNoteInput" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="enrollment-actions">
+        <button class="primary-btn" type="button" id="saveRenewalBtn">保存续费</button>
+        <button class="secondary-btn" type="button" id="cancelRenewalBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="teacherModal">
+    <div class="modal-mask" id="teacherModalMask"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="teacherFormTitle">添加教师</h3>
+        </div>
+        <button class="close-btn" type="button" id="closeTeacherModalBtn">关闭</button>
+      </div>
+      <div class="autofill-decoy">
+        <input type="text" autocomplete="username">
+        <input type="password" autocomplete="new-password">
+      </div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>教师姓名</label>
+          <input type="text" id="teacherName" autocomplete="off">
+        </div>
+        <div class="form-field">
+          <label>昵称</label>
+          <input type="text" id="teacherNickname" autocomplete="off">
+        </div>
+        <div class="form-field">
+          <label>教授科目</label>
+          <input type="text" id="teacherSubject" autocomplete="off">
+        </div>
+        <div class="form-field">
+          <label>联系电话</label>
+          <input type="text" id="teacherPhone" autocomplete="off">
+        </div>
+      </div>
+      <div class="enrollment-actions">
+        <button class="primary-btn" type="button" id="saveTeacherBtn">保存教师</button>
+        <button class="secondary-btn" type="button" id="cancelTeacherBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="retailModal">
+    <div class="modal-mask" id="retailModalMask"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="retailFormTitle">新增零售</h3>
+        </div>
+        <button class="close-btn" type="button" id="closeRetailModalBtn">关闭</button>
+      </div>
+      <div class="form-grid form-grid-3">
+        <div class="form-field">
+          <label>销售日期</label>
+          <input type="date" id="retailDateInput">
+        </div>
+        <div class="form-field">
+          <label>物品名称</label>
+          <input type="text" id="retailItemInput" autocomplete="off">
+        </div>
+        <div class="form-field">
+          <label>商品分类</label>
+          <select id="retailCategoryInput"></select>
+        </div>
+        <div class="form-field">
+          <label>数量</label>
+          <input type="number" id="retailQuantityInput" min="1" value="1">
+        </div>
+        <div class="form-field">
+          <label>单价</label>
+          <input type="number" id="retailUnitPriceInput" min="0" value="0">
+        </div>
+        <div class="form-field">
+          <label>销售金额</label>
+          <input type="number" id="retailAmountInput" min="0" value="0">
+        </div>
+        <div class="form-field">
+          <label>购买人</label>
+          <input type="text" id="retailBuyerInput" autocomplete="off">
+        </div>
+        <div class="form-field">
+          <label>校区</label>
+          <select id="retailCampusInput"></select>
+        </div>
+        <div class="form-field">
+          <label>关联课程</label>
+          <select id="retailCourseInput"></select>
+        </div>
+        <div class="form-field">
+          <label>收款方式</label>
+          <input type="text" id="retailPaymentInput" autocomplete="off">
+        </div>
+        <div class="form-field">
+          <label>经办人</label>
+          <input type="text" id="retailOperatorInput" autocomplete="off">
+        </div>
+        <div class="form-field" style="grid-column: 1 / -1;">
+          <label>备注</label>
+          <textarea id="retailRemarkInput" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="enrollment-actions">
+        <button class="primary-btn" type="button" id="saveRetailBtn">保存记录</button>
+        <button class="secondary-btn" type="button" id="cancelRetailBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="studentAdjustModal">
+    <div class="modal-mask" id="studentAdjustMask"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="studentAdjustTitle">学员调整</h3>
+          <p class="form-helper" id="adjustStudentName"></p>
+        </div>
+        <button class="close-btn" type="button" id="closeStudentAdjustBtn">关闭</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-field hidden" id="adjustCourseField">
+          <label>课程</label>
+          <select id="adjustCourseSelect"></select>
+        </div>
+        <div class="form-field" id="adjustClassField">
+          <label>班级</label>
+          <select id="adjustClassSelect"></select>
+        </div>
+        <div class="form-field" id="adjustTeacherField">
+          <label>教师</label>
+          <select id="adjustTeacherSelect"></select>
+        </div>
+        <div class="form-field">
+          <label>生效日期</label>
+          <input type="date" id="adjustEffectiveDate">
+        </div>
+        <div class="form-field" style="grid-column: 1 / -1;">
+          <label>备注</label>
+          <textarea id="adjustNoteInput" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="enrollment-actions">
+        <button class="primary-btn" type="button" id="saveStudentAdjustBtn">保存调整</button>
+        <button class="secondary-btn" type="button" id="cancelStudentAdjustBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="sessionTeacherModal">
+    <div class="modal-mask" id="sessionTeacherMask"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3>选择教师</h3>
+        </div>
+        <button class="close-btn" type="button" id="closeSessionTeacherModalBtn">关闭</button>
+      </div>
+      <div class="modal-list" id="sessionTeacherList"></div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="managementEditorModal">
+    <div class="modal-mask" id="managementEditorMask"></div>
+    <div class="modal-box management-dialog">
+      <button class="close-btn" type="button" id="closeManagementEditorBtn">关闭</button>
+      <h3 id="managementEditorTitle">新建内容</h3>
+      <p class="form-helper" id="managementEditorHint"></p>
+      <div class="form-field">
+        <label id="managementEditorLabel">名称</label>
+        <input type="text" id="managementEditorInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="enrollment-actions top-space">
+        <button class="primary-btn" type="button" id="saveManagementEditorBtn">保存</button>
+        <button class="secondary-btn" type="button" id="cancelManagementEditorBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="../js/dashboard.js"></script>
+</body>
+
+</html>

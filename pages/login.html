@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - 学校学员课时管理系统</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+  <section class="login-screen">
+    <div class="login-visual">
+      <div class="visual-overlay"></div>
+      <div class="visual-copy">
+        <p class="eyebrow">School Class Hours System</p>
+        <h1>学校学员课时管理系统</h1>
+        <p>适用于招生、教学、收费与课时管理的前期业务平台原型。</p>
+      </div>
+    </div>
+
+    <div class="login-panel">
+      <div class="login-card">
+        <h2>账号登录</h2>
+        <p class="login-note">请输入账号和密码进入系统</p>
+
+        <form id="loginForm" class="login-form">
+          <label>
+            <span>账号</span>
+            <input type="text" id="username" placeholder="请输入账号" value="admin" required>
+          </label>
+
+          <label>
+            <span>密码</span>
+            <input type="password" id="password" placeholder="请输入密码" value="123456" required>
+          </label>
+
+          <button type="submit" class="primary-btn">登录系统</button>
+        </form>
+
+        <p class="hint">演示账号：admin / 123456</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="../js/login.js"></script>
+</body>
+
+</html>
