@@ -480,6 +480,18 @@
               </div>
             </div>
 
+            <div class="session-view-tabs" id="sessionViewTabs">
+              <button class="business-tab active" type="button" data-session-view="editor">记录上课</button>
+              <button class="business-tab" type="button" data-session-view="history">上课记录</button>
+            </div>
+
+            <div class="session-view-panel" id="sessionEditorPanel">
+            <div class="form-grid top-space">
+              <div class="form-field">
+                <label>上课日期</label>
+                <input type="date" id="sessionLessonDateInput">
+              </div>
+            </div>
             <div class="session-class-toolbar">
               <span class="session-class-label">教师名下班级</span>
               <div class="session-class-tabs" id="sessionClassTabs"></div>
@@ -495,7 +507,31 @@
               <button class="primary-btn" type="button" id="saveSessionBtn">记录上课</button>
             </div>
 
-            <div class="section-head top-space">
+              </div>
+
+              <div class="session-view-panel hidden" id="sessionHistoryPanel">
+              <div class="transaction-filter-bar simple-filter-bar top-space" id="sessionRecordFilterBar">
+                <div class="form-field">
+                  <label>上课日期</label>
+                  <input type="date" id="sessionDateFilter">
+                </div>
+                <div class="form-field">
+                  <label>教师</label>
+                  <select id="sessionTeacherFilter"></select>
+                </div>
+                <div class="form-field">
+                  <label>班级</label>
+                  <select id="sessionClassFilter"></select>
+                </div>
+                <div class="form-field align-end">
+                  <div class="inline-actions">
+                    <button class="primary-btn" type="button" id="filterSessionBtn">查询</button>
+                    <button class="secondary-btn" type="button" id="resetSessionFilterBtn">清空</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-head top-space">
               <div>
                 <h3>最近上课记录</h3>
               </div>
@@ -521,6 +557,7 @@
               <span class="pagination-info" id="sessionPageInfo"></span>
               <button class="secondary-btn" type="button" id="sessionNextPageBtn"></button>
             </div>
+              </div>
           </article>
         </section>
 

@@ -553,6 +553,47 @@ input {
   align-items: start;
 }
 
+#panel-class .class-manager-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  gap: 18px;
+}
+
+#panel-class .class-manager-grid .form-field:first-child {
+  grid-column: 1 / 2;
+}
+
+#panel-class .class-manager-grid .form-field:last-child {
+  align-self: end;
+}
+
+#panel-class #newClassInput {
+  min-height: 52px;
+}
+
+#panel-class #addClassTypeBtn {
+  background: #f7efe5;
+  color: #9c633b;
+  border: 1px solid #ead7c0;
+  box-shadow: none;
+}
+
+#panel-class #addClassTypeBtn:hover {
+  background: #f3e6d8;
+}
+
+#panel-class .class-manager-grid .form-field:last-child label {
+  color: #9c633b;
+  font-size: 14px;
+}
+
+#panel-class .class-manager-grid .form-field:last-child select {
+  background: #fffaf4;
+}
+
+#closeManagementEditorBtn {
+  display: none !important;
+}
+
 #panel-class .class-manager-grid .form-field:has(#newCourseInput),
 #panel-class .class-manager-grid .form-field:has(#classCourseSelect) {
   display: none !important;
@@ -659,6 +700,17 @@ input {
   display: grid;
   gap: 10px;
   margin: 18px 0 8px;
+}
+
+.session-view-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.session-view-panel {
+  display: block;
 }
 
 .session-class-label {
@@ -1287,7 +1339,7 @@ th {
 }
 
 .simple-filter-bar {
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .modal {

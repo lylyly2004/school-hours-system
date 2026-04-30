@@ -8,19 +8,60 @@ function getFilteredClasses(keyword = "") {
   ].some((value) => String(value || "").includes(normalized)));
 }
 
+function getClassActiveStudents(className) {
+  return enrollmentRecords.filter((record) => isStudentActive(record) && record.className === className);
+}
+
+function getClassBlockingStudents(className) {
+  return enrollmentRecords.filter((record) => (
+    record.className === className && (record.studentStatus || "active") !== "refunded"
+  ));
+}
+
+function canDeleteClass(item) {
+  return getClassBlockingStudents(item.name).length === 0;
+}
+
+function getClassDeleteBlockReason(item) {
+  const blockingStudents = getClassBlockingStudents(item.name);
+  if (blockingStudents.length > 0) {
+    return "\u8BE5\u73ED\u7EA7\u8FD8\u6709\u5728\u8BFB\u6216\u505C\u8BFE\u5B66\u5458";
+  }
+  return "";
+}
+
+function getClassDetailHtml(item) {
+  const teacherName = getCurrentClassTeacher(item.name);
+  const activeStudents = getClassActiveStudents(item.name);
+  const statusText = isClassEnabled(item) ? "\u542F\u7528\u4E2D" : "\u5DF2\u505C\u7528";
+
+  return `
+    <div class="record-detail-box">
+      <div><strong>\u73ED\u7EA7\u540D\u79F0\uFF1A</strong>${item.name}</div>
+      <div><strong>\u6388\u8BFE\u5F62\u5F0F\uFF1A</strong>${item.type || "-"}</div>
+      <div><strong>\u5F53\u524D\u72B6\u6001\uFF1A</strong>${statusText}</div>
+      <div><strong>\u5F53\u524D\u6388\u8BFE\u8001\u5E08\uFF1A</strong>${teacherName || "-"}</div>
+      <div><strong>\u5728\u8BFB\u5B66\u5458\u4EBA\u6570\uFF1A</strong>${activeStudents.length}</div>
+      <div><strong>\u5F53\u524D\u5728\u8BFB\u5B66\u5458\uFF1A</strong>${activeStudents.length > 0 ? activeStudents.map((record) => record.studentName).join("\u3001") : "\u6682\u65E0\u5728\u8BFB\u5B66\u5458"}</div>
+    </div>
+  `;
+}
+
 function renderClasses(keyword = "") {
   const filtered = getFilteredClasses(keyword);
 
   if (filtered.length === 0) {
-    refs.classTableBody.innerHTML = `<tr><td colspan="6">当前没有匹配的班级数据</td></tr>`;
+    refs.classTableBody.innerHTML = `<tr><td colspan="6">\u5F53\u524D\u6CA1\u6709\u5339\u914D\u7684\u73ED\u7EA7\u6570\u636E</td></tr>`;
     return;
   }
 
   refs.classTableBody.innerHTML = filtered.map((item) => {
     const enabled = isClassEnabled(item);
-    const statusLabel = enabled ? "启用中" : "已停用";
-    const toggleLabel = enabled ? "停用" : "启用";
+    const statusLabel = enabled ? "\u542F\u7528\u4E2D" : "\u5DF2\u505C\u7528";
+    const toggleLabel = enabled ? "\u505C\u7528" : "\u542F\u7528";
     const toggleClass = enabled ? "table-action-btn" : "table-edit-btn";
+    const deletable = canDeleteClass(item);
+    const deleteBlockReason = getClassDeleteBlockReason(item);
 
     return `
       <tr>
@@ -30,7 +71,14 @@ function renderClasses(keyword = "") {
         <td>${getCurrentClassTeacher(item.name)}</td>
         <td>${getCurrentClassStudentCount(item.name)}</td>
         <td>
+          <button class="table-detail-btn" type="button" data-detail-class-id="${item.id}">\u8BE6\u60C5</button>
           <button class="${toggleClass}" type="button" data-toggle-class-id="${item.id}">${toggleLabel}</button>
+          <button class="table-refund-btn ${deletable ? "" : "disabled-btn"}" type="button" data-delete-class-id="${item.id}" data-delete-class-allowed="${deletable ? "true" : "false"}" data-delete-class-reason="${deleteBlockReason}">\u5220\u9664</button>
+        </td>
+      </tr>
+      <tr class="detail-row hidden" id="class-detail-row-${item.id}">
+        <td colspan="6">
+          ${getClassDetailHtml(item)}
         </td>
       </tr>
     `;
@@ -42,15 +90,15 @@ function addClass() {
   const classType = refs.classTypeSelect.value;
 
   if (!className) {
-    showToast("请先填写班级名称");
+    showToast("\u8BF7\u5148\u586B\u5199\u73ED\u7EA7\u540D\u79F0");
     return;
   }
   if (!classType) {
-    showToast("请先选择班级类型");
+    showToast("\u8BF7\u5148\u9009\u62E9\u6388\u8BFE\u5F62\u5F0F");
     return;
   }
   if (classes.some((item) => item.name === className)) {
-    showToast("该班级名称已存在");
+    showToast("\u8BE5\u73ED\u7EA7\u540D\u79F0\u5DF2\u5B58\u5728");
     return;
   }
 
@@ -64,20 +112,22 @@ function addClass() {
   refs.newClassInput.value = "";
   populateClassOptions(className);
   renderClasses(refs.classSearch?.value || "");
-  showToast("班级已创建，可在新生报名中选择");
+  showToast("\u73ED\u7EA7\u5DF2\u521B\u5EFA\uFF0C\u53EF\u5728\u65B0\u751F\u62A5\u540D\u4E2D\u9009\u62E9");
 }
 
 function getClassUsageSummary(className) {
   const summary = {
     enrollments: enrollmentRecords.filter((item) => item.className === className).length,
-    sessions: sessionRecords.filter((item) => item.className === className).length
+    sessions: sessionRecords.filter((item) => item.className === className).length,
+    blockingStudents: getClassBlockingStudents(className).length
   };
   const messages = [];
-  if (summary.enrollments) messages.push(`报名记录 ${summary.enrollments} 条`);
-  if (summary.sessions) messages.push(`上课记录 ${summary.sessions} 条`);
+  if (summary.blockingStudents) messages.push(`\u5728\u8BFB/\u505C\u8BFE\u5B66\u5458 ${summary.blockingStudents} \u4F4D`);
+  if (summary.enrollments) messages.push(`\u62A5\u540D\u8BB0\u5F55 ${summary.enrollments} \u6761`);
+  if (summary.sessions) messages.push(`\u4E0A\u8BFE\u8BB0\u5F55 ${summary.sessions} \u6761`);
   return {
     summary,
-    message: messages.length > 0 ? messages.join("、") : "当前没有业务数据在使用"
+    message: messages.length > 0 ? messages.join("\u3001") : "\u5F53\u524D\u6CA1\u6709\u4E1A\u52A1\u6570\u636E\u5728\u4F7F\u7528"
   };
 }
 
@@ -86,10 +136,10 @@ function toggleClassStatus(classId) {
   if (!target) return;
 
   const nextStatus = isClassEnabled(target) ? "inactive" : "active";
-  const actionLabel = nextStatus === "inactive" ? "停用" : "启用";
+  const actionLabel = nextStatus === "inactive" ? "\u505C\u7528" : "\u542F\u7528";
   const usageInfo = getClassUsageSummary(target.name);
 
-  if (!window.confirm(`确认${actionLabel}班级“${target.name}”吗？\n当前关联数据：${usageInfo.message}`)) {
+  if (!window.confirm(`\u786E\u8BA4${actionLabel}\u73ED\u7EA7\u201C${target.name}\u201D\u5417\uFF1F\n\u5F53\u524D\u5173\u8054\u6570\u636E\uFF1A${usageInfo.message}`)) {
     return;
   }
 
@@ -104,7 +154,36 @@ function toggleClassStatus(classId) {
 
   showToast(
     nextStatus === "inactive"
-      ? "班级已停用，历史数据保留，新报名将不可再选择"
-      : "班级已启用，可重新在新生报名中选择"
+      ? "\u73ED\u7EA7\u5DF2\u505C\u7528\uFF0C\u5386\u53F2\u6570\u636E\u4FDD\u7559\uFF0C\u65B0\u62A5\u540D\u5C06\u4E0D\u53EF\u518D\u9009\u62E9"
+      : "\u73ED\u7EA7\u5DF2\u542F\u7528\uFF0C\u53EF\u91CD\u65B0\u5728\u65B0\u751F\u62A5\u540D\u4E2D\u9009\u62E9"
   );
+}
+
+function deleteClass(classId) {
+  const target = classes.find((item) => Number(item.id) === Number(classId));
+  if (!target) return;
+
+  const usageInfo = getClassUsageSummary(target.name);
+  if (usageInfo.summary.blockingStudents > 0) {
+    showToast("\u5F53\u524D\u73ED\u7EA7\u4ECD\u6709\u5728\u8BFB\u6216\u505C\u8BFE\u5B66\u5458\uFF0C\u4E0D\u5141\u8BB8\u5220\u9664");
+    return;
+  }
+
+  if (!window.confirm(`\u786E\u8BA4\u5220\u9664\u73ED\u7EA7\u201C${target.name}\u201D\u5417\uFF1F\n\u53EF\u5220\u9664\u6761\u4EF6\u5DF2\u6EE1\u8DB3\u3002\n\u5F53\u524D\u5173\u8054\u6570\u636E\uFF1A${usageInfo.message}`)) {
+    return;
+  }
+
+  classes = classes.filter((item) => Number(item.id) !== Number(classId));
+
+  const nextSelectedClass = refs.classSelect?.value === target.name ? "" : (refs.classSelect?.value || "");
+  populateClassOptions(nextSelectedClass);
+  renderClasses(refs.classSearch?.value || "");
+  if (typeof renderSessionWorkspace === "function") {
+    renderSessionWorkspace();
+  }
+  if (typeof renderStudents === "function") {
+    renderStudents(refs.studentSearch?.value || "");
+  }
+
+  showToast("\u73ED\u7EA7\u5DF2\u5220\u9664\u3002\u5386\u53F2\u62A5\u540D\u548C\u4E0A\u8BFE\u8BB0\u5F55\u4ECD\u4F1A\u4FDD\u7559\u539F\u73ED\u7EA7\u540D\u79F0\u4F5C\u4E3A\u8FFD\u6EAF\u3002");
 }

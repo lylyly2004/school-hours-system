@@ -1,19 +1,19 @@
 function renderCourseManagementList() {
   if (courses.length === 0) {
-    refs.courseTableBody.innerHTML = `<tr><td colspan="2">当前还没有课程类型</td></tr>`;
+    refs.courseTableBody.innerHTML = `<tr><td colspan="2">\u5F53\u524D\u8FD8\u6CA1\u6709\u5B66\u79D1\u7C7B\u522B</td></tr>`;
     return;
   }
 
   refs.courseTableBody.innerHTML = courses.map((course) => {
     const enabled = isCourseEnabled(course);
-    const statusLabel = enabled ? "启用中" : "已停用";
-    const toggleLabel = enabled ? "停用" : "启用";
+    const statusLabel = enabled ? "\u542F\u7528\u4E2D" : "\u5DF2\u505C\u7528";
+    const toggleLabel = enabled ? "\u505C\u7528" : "\u542F\u7528";
     const toggleClass = enabled ? "table-action-btn" : "table-edit-btn";
     return `
       <tr>
         <td>${course.name}<span class="table-note"> ${statusLabel}</span></td>
         <td>
-          <button class="table-edit-btn" type="button" data-edit-course-id="${course.id}">修改</button>
+          <button class="table-edit-btn" type="button" data-edit-course-id="${course.id}">\u4FEE\u6539</button>
           <button class="${toggleClass}" type="button" data-toggle-course-id="${course.id}">${toggleLabel}</button>
         </td>
       </tr>
@@ -36,13 +36,13 @@ function getCourseUsageSummary(courseName) {
     today: todayRecords.filter((item) => item.course === courseName).length
   };
   const messages = [];
-  if (summary.enrollments) messages.push(`报名记录 ${summary.enrollments} 条`);
-  if (summary.retail) messages.push(`零售记录 ${summary.retail} 条`);
-  if (summary.transactions) messages.push(`流水 ${summary.transactions} 条`);
-  if (summary.today) messages.push(`今日办理 ${summary.today} 条`);
+  if (summary.enrollments) messages.push(`\u62A5\u540D\u8BB0\u5F55 ${summary.enrollments} \u6761`);
+  if (summary.retail) messages.push(`\u96F6\u552E\u8BB0\u5F55 ${summary.retail} \u6761`);
+  if (summary.transactions) messages.push(`\u6D41\u6C34 ${summary.transactions} \u6761`);
+  if (summary.today) messages.push(`\u4ECA\u65E5\u529E\u7406 ${summary.today} \u6761`);
   return {
     summary,
-    message: messages.length > 0 ? messages.join("、") : "当前没有业务数据在使用"
+    message: messages.length > 0 ? messages.join("\u3001") : "\u5F53\u524D\u6CA1\u6709\u4E1A\u52A1\u6570\u636E\u5728\u4F7F\u7528"
   };
 }
 
@@ -51,10 +51,10 @@ function toggleCourseStatus(courseId) {
   if (!target) return;
 
   const nextStatus = isCourseEnabled(target) ? "inactive" : "active";
-  const actionLabel = nextStatus === "inactive" ? "停用" : "启用";
+  const actionLabel = nextStatus === "inactive" ? "\u505C\u7528" : "\u542F\u7528";
   const usageInfo = getCourseUsageSummary(target.name);
 
-  if (!window.confirm(`确认${actionLabel}课程“${target.name}”吗？\n当前关联数据：${usageInfo.message}`)) {
+  if (!window.confirm(`\u786E\u8BA4${actionLabel}\u5B66\u79D1\u7C7B\u522B\u201C${target.name}\u201D\u5417\uFF1F\n\u5F53\u524D\u5173\u8054\u6570\u636E\uFF1A${usageInfo.message}`)) {
     return;
   }
 
@@ -69,6 +69,6 @@ function toggleCourseStatus(courseId) {
   renderTransactions();
 
   showToast(nextStatus === "inactive"
-    ? "课程已停用，历史数据保留，新报名将不可再选择"
-    : "课程已启用，可重新在新生报名中选择");
+    ? "\u5B66\u79D1\u7C7B\u522B\u5DF2\u505C\u7528\uFF0C\u5386\u53F2\u6570\u636E\u4FDD\u7559\uFF0C\u65B0\u62A5\u540D\u5C06\u4E0D\u53EF\u518D\u9009\u62E9"
+    : "\u5B66\u79D1\u7C7B\u522B\u5DF2\u542F\u7528\uFF0C\u53EF\u91CD\u65B0\u5728\u65B0\u751F\u62A5\u540D\u4E2D\u9009\u62E9");
 }

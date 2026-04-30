@@ -9,6 +9,47 @@ function updateHeader() {
   }
 }
 
+function applyTeachingTerminology() {
+  const courseMenu = document.querySelector('.menu-item[data-page="course"]');
+  if (courseMenu) courseMenu.textContent = "\u5B66\u79D1\u7BA1\u7406";
+  if (currentPage === "course") {
+    refs.pageTitle.textContent = "\u5B66\u79D1\u7BA1\u7406";
+  }
+
+  const enrollmentCourseField = refs.courseSelect?.closest(".form-field");
+  const enrollmentCourseLabel = enrollmentCourseField?.querySelector("label");
+  if (enrollmentCourseLabel) {
+    enrollmentCourseLabel.innerHTML = `\u62A5\u540D\u5B66\u79D1\u7C7B\u522B <span class="required-mark">*</span>`;
+  }
+
+  const coursePanel = document.getElementById("panel-course");
+  if (coursePanel) {
+    const cardTag = coursePanel.querySelector(".card-tag");
+    const title = coursePanel.querySelector(".section-head h3");
+    const helper = coursePanel.querySelector(".form-helper");
+    const addBtn = coursePanel.querySelector("#courseQuickAddBtn");
+    const firstHeader = coursePanel.querySelector("thead th");
+    if (cardTag) cardTag.textContent = "\u5B66\u79D1\u7BA1\u7406";
+    if (title) title.textContent = "\u5B66\u79D1\u7C7B\u522B\u7EF4\u62A4";
+    if (helper) helper.textContent = "\u5B66\u79D1\u7C7B\u522B\u5355\u72EC\u7EF4\u62A4\uFF0C\u65B0\u751F\u62A5\u540D\u548C\u6559\u6750\u96F6\u552E\u4F1A\u540C\u6B65\u8BFB\u53D6\u8FD9\u91CC\u7684\u5B66\u79D1\u7C7B\u522B\u6570\u636E\u3002";
+    if (addBtn) addBtn.textContent = "\u65B0\u5EFA\u5B66\u79D1\u7C7B\u522B";
+    if (firstHeader) firstHeader.textContent = "\u5B66\u79D1\u7C7B\u522B";
+  }
+
+  const classPanel = document.getElementById("panel-class");
+  if (classPanel) {
+    const addClassTypeBtn = classPanel.querySelector("#addClassTypeBtn");
+    const compactHelper = classPanel.querySelector(".compact-head .form-helper");
+    const classTypeField = refs.classTypeSelect?.closest(".form-field");
+    const classTypeLabel = classTypeField?.querySelector("label");
+    const secondHeader = classPanel.querySelector("thead th:nth-child(2)");
+    if (addClassTypeBtn) addClassTypeBtn.textContent = "\u65B0\u5EFA\u6388\u8BFE\u5F62\u5F0F";
+    if (compactHelper) compactHelper.textContent = "\u4EE5\u73ED\u7EA7\u540D\u79F0\u4E3A\u4E3B\u8FDB\u884C\u7BA1\u7406\u3002\u6388\u8BFE\u5F62\u5F0F\u5C5E\u4E8E\u8F85\u52A9\u8BF4\u660E\uFF0C\u65B0\u751F\u62A5\u540D\u3001\u5B66\u5458\u8F6C\u73ED\u548C\u4E0A\u8BFE\u7BA1\u7406\u4F1A\u540C\u6B65\u8BFB\u53D6\u8FD9\u91CC\u7684\u73ED\u7EA7\u6570\u636E\u3002";
+    if (classTypeLabel) classTypeLabel.textContent = "\u6388\u8BFE\u5F62\u5F0F\uFF08\u8F85\u52A9\uFF09";
+    if (secondHeader) secondHeader.textContent = "\u6388\u8BFE\u5F62\u5F0F";
+  }
+}
+
 function switchPage(pageName) {
   if (pageName !== "student" && typeof closeStudentDetail === "function") {
     closeStudentDetail(true);
@@ -17,6 +58,7 @@ function switchPage(pageName) {
   refs.menuItems.forEach((button) => button.classList.toggle("active", button.dataset.page === pageName));
   refs.contentPanels.forEach((panel) => panel.classList.toggle("active", panel.id === `panel-${pageName}`));
   updateHeader();
+  applyTeachingTerminology();
   if (pageName === "student") {
     renderStudents(refs.studentSearch.value || "");
   }

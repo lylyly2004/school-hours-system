@@ -1,5 +1,6 @@
 const SESSION_PAGE_SIZE = 10;
 let sessionRecordPage = 1;
+let currentSessionView = "editor";
 
 function getSessionSelectableStudents(teacherName = selectedSessionTeacherName, className = selectedSessionClassName) {
   if (!teacherName || !className) return [];
@@ -33,9 +34,18 @@ function getTeacherAvailableClasses(teacherName) {
 }
 
 function getFilteredSessionRecords() {
-  return selectedSessionTeacherName
-    ? sessionRecords.filter((record) => record.teacherName === selectedSessionTeacherName)
-    : [];
+  const dateValue = refs.sessionDateFilter?.value || "";
+  const teacherValue = refs.sessionTeacherFilter?.value || "\u5168\u90E8\u6559\u5E08";
+  const classValue = refs.sessionClassFilter?.value || "\u5168\u90E8\u73ED\u7EA7";
+
+  return sessionRecords
+    .filter((record) => {
+      if (dateValue && record.date !== dateValue) return false;
+      if (teacherValue !== "\u5168\u90E8\u6559\u5E08" && record.teacherName !== teacherValue) return false;
+      if (classValue !== "\u5168\u90E8\u73ED\u7EA7" && record.className !== classValue) return false;
+      return true;
+    })
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
 }
 
 function syncSessionStaticLabels() {
@@ -43,6 +53,33 @@ function syncSessionStaticLabels() {
   if (title) title.textContent = "\u4e0a\u8bfe\u8bb0\u5f55";
   if (refs.sessionPrevPageBtn) refs.sessionPrevPageBtn.textContent = "\u4e0a\u4e00\u9875";
   if (refs.sessionNextPageBtn) refs.sessionNextPageBtn.textContent = "\u4e0b\u4e00\u9875";
+}
+
+function renderSessionView() {
+  if (!refs.sessionEditorPanel || !refs.sessionHistoryPanel || !refs.sessionViewTabs) return;
+  refs.sessionEditorPanel.classList.toggle("hidden", currentSessionView !== "editor");
+  refs.sessionHistoryPanel.classList.toggle("hidden", currentSessionView !== "history");
+  refs.sessionViewTabs.querySelectorAll("[data-session-view]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.sessionView === currentSessionView);
+  });
+}
+
+function populateSessionRecordFilters() {
+  if (!refs.sessionTeacherFilter || !refs.sessionClassFilter) return;
+
+  const teacherOptions = ["\u5168\u90E8\u6559\u5E08", ...teachers.map((teacher) => teacher.name)];
+  const classOptions = ["\u5168\u90E8\u73ED\u7EA7", ...classes.map((item) => item.name)];
+
+  const currentTeacher = refs.sessionTeacherFilter.value || "\u5168\u90E8\u6559\u5E08";
+  const currentClass = refs.sessionClassFilter.value || "\u5168\u90E8\u73ED\u7EA7";
+
+  refs.sessionTeacherFilter.innerHTML = teacherOptions
+    .map((item) => `<option value="${item}" ${item === currentTeacher ? "selected" : ""}>${item}</option>`)
+    .join("");
+
+  refs.sessionClassFilter.innerHTML = classOptions
+    .map((item) => `<option value="${item}" ${item === currentClass ? "selected" : ""}>${item}</option>`)
+    .join("");
 }
 
 function renderSessionTeacherPicker() {
@@ -140,6 +177,35 @@ function getSessionStudentNames(record) {
     .join("\u3001");
 }
 
+function getSessionStudentDetails(record) {
+  const students = Array.isArray(record.students) ? record.students : [];
+  return students
+    .map((item) => {
+      const matched = enrollmentRecords.find((row) => Number(row.id) === Number(item.enrollmentId));
+      return {
+        name: matched?.studentName || "-",
+        deductedHours: Number(item.deductedHours || 0)
+      };
+    })
+    .filter((item) => item.name);
+}
+
+function getSessionDetailHtml(record) {
+  const details = getSessionStudentDetails(record);
+  if (details.length === 0) {
+    return `<div class="record-detail-box"><div>\u6682\u65E0\u5230\u8BFE\u5B66\u5458\u660E\u7EC6</div></div>`;
+  }
+
+  return `
+    <div class="record-detail-box">
+      ${details.map((item, index) => `
+        <div><strong>\u5E8F\u53F7 ${index + 1}\uFF1A</strong>${item.name}</div>
+        <div><strong>\u672C\u6B21\u6263\u51CF\u8BFE\u65F6\uFF1A</strong>${item.deductedHours}</div>
+      `).join("")}
+    </div>
+  `;
+}
+
 function renderSessionPagination(totalRecords) {
   const totalPages = Math.max(1, Math.ceil(totalRecords / SESSION_PAGE_SIZE));
   if (sessionRecordPage > totalPages) sessionRecordPage = totalPages;
@@ -174,8 +240,15 @@ function renderSessionRecords() {
       <td>${record.teacherName}</td>
       <td>${record.className}</td>
       <td>${record.attendance}</td>
-      <td>${getSessionStudentNames(record) || "-"}</td>
+      <td>
+        <button class="table-detail-btn" type="button" data-detail-session-id="${record.id}">\u67E5\u770B\u8BE6\u60C5</button>
+      </td>
       <td><button class="table-action-btn" type="button" data-delete-session-id="${record.id}">\u5220\u9664</button></td>
+    </tr>
+    <tr class="detail-row hidden" id="session-detail-row-${record.id}">
+      <td colspan="6">
+        ${getSessionDetailHtml(record)}
+      </td>
     </tr>
   `).join("");
 
@@ -189,6 +262,11 @@ function resetSessionSelection() {
 
 function renderSessionWorkspace() {
   syncSessionStaticLabels();
+  populateSessionRecordFilters();
+  renderSessionView();
+  if (refs.sessionLessonDateInput && !refs.sessionLessonDateInput.value) {
+    refs.sessionLessonDateInput.value = getTodayString();
+  }
   refs.sessionTeacherDisplay.textContent = selectedSessionTeacherName || "\u672a\u9009\u62e9";
   renderSessionTeacherPicker();
   renderSessionClassTabs();
@@ -214,19 +292,37 @@ function changeSessionRecordPage(direction) {
   renderSessionRecords();
 }
 
+function applySessionRecordFilters() {
+  sessionRecordPage = 1;
+  renderSessionRecords();
+}
+
+function resetSessionRecordFilters() {
+  if (refs.sessionDateFilter) refs.sessionDateFilter.value = "";
+  if (refs.sessionTeacherFilter) refs.sessionTeacherFilter.value = "\u5168\u90E8\u6559\u5E08";
+  if (refs.sessionClassFilter) refs.sessionClassFilter.value = "\u5168\u90E8\u73ED\u7EA7";
+  applySessionRecordFilters();
+}
+
+function switchSessionView(viewName) {
+  currentSessionView = viewName === "history" ? "history" : "editor";
+  renderSessionView();
+}
+
 function saveSessionRecord() {
   const candidates = getSessionSelectableStudents();
   const candidateIds = candidates.map((record) => Number(record.id));
   const validSelectedIds = selectedSessionStudentIds.filter((id) => candidateIds.includes(Number(id)));
+  const lessonDate = refs.sessionLessonDateInput?.value || "";
 
-  if (!selectedSessionTeacherName || !selectedSessionClassName || validSelectedIds.length === 0) {
-    showToast("\u8bf7\u5148\u9009\u62e9\u6559\u5e08\u3001\u73ed\u7ea7\u5e76\u52fe\u9009\u5b66\u5458\u3002");
+  if (!lessonDate || !selectedSessionTeacherName || !selectedSessionClassName || validSelectedIds.length === 0) {
+    showToast("\u8bf7\u5148\u9009\u62e9\u4E0A\u8BFE\u65E5\u671F\u3001\u6559\u5E08\u3001\u73ED\u7EA7\u5E76\u52FE\u9009\u5B66\u5458\u3002");
     return;
   }
 
   const session = {
     id: uid(),
-    date: getTodayString(),
+    date: lessonDate,
     teacherName: selectedSessionTeacherName,
     className: selectedSessionClassName,
     attendance: validSelectedIds.length,
@@ -241,7 +337,7 @@ function saveSessionRecord() {
   renderTeachers();
   renderStudents(refs.studentSearch.value || "");
   renderRenewalList();
-  showToast("\u4e0a\u8bfe\u8bb0\u5f55\u5df2\u4fdd\u5b58\u3002");
+  showToast(`${lessonDate} ${selectedSessionTeacherName} / ${selectedSessionClassName} \u5df2\u8bb0\u5f55 ${validSelectedIds.length} \u4f4d\u5b66\u5458\u4e0a\u8bfe\u3002`);
 }
 
 function deleteSessionRecord(sessionId) {

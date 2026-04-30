@@ -110,7 +110,14 @@
     selectedSessionStudentIds = candidates;
     renderSessionStudents();
   });
+  refs.sessionViewTabs.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-session-view]");
+    if (!target) return;
+    switchSessionView(target.dataset.sessionView);
+  });
   refs.sessionResetBtn.addEventListener("click", resetSessionSelection);
+  refs.filterSessionBtn.addEventListener("click", applySessionRecordFilters);
+  refs.resetSessionFilterBtn.addEventListener("click", resetSessionRecordFilters);
   refs.sessionPrevPageBtn.addEventListener("click", () => changeSessionRecordPage(-1));
   refs.sessionNextPageBtn.addEventListener("click", () => changeSessionRecordPage(1));
   refs.saveSessionBtn.addEventListener("click", saveSessionRecord);
@@ -253,6 +260,20 @@
   });
 
   refs.classTableBody.addEventListener("click", (event) => {
+    const detailBtn = event.target.closest("[data-detail-class-id]");
+    if (detailBtn) {
+      document.getElementById(`class-detail-row-${detailBtn.dataset.detailClassId}`)?.classList.toggle("hidden");
+      return;
+    }
+    const deleteBtn = event.target.closest("[data-delete-class-id]");
+    if (deleteBtn) {
+      if (deleteBtn.dataset.deleteClassAllowed !== "true") {
+        showToast(deleteBtn.dataset.deleteClassReason || "\u5F53\u524D\u73ED\u7EA7\u4E0D\u6EE1\u8DB3\u5220\u9664\u6761\u4EF6");
+        return;
+      }
+      deleteClass(Number(deleteBtn.dataset.deleteClassId));
+      return;
+    }
     const toggleBtn = event.target.closest("[data-toggle-class-id]");
     if (!toggleBtn) return;
     toggleClassStatus(Number(toggleBtn.dataset.toggleClassId));
@@ -285,6 +306,11 @@
   });
 
   refs.sessionTableBody.addEventListener("click", (event) => {
+    const detailBtn = event.target.closest("[data-detail-session-id]");
+    if (detailBtn) {
+      document.getElementById(`session-detail-row-${detailBtn.dataset.detailSessionId}`)?.classList.toggle("hidden");
+      return;
+    }
     const deleteBtn = event.target.closest("[data-delete-session-id]");
     if (!deleteBtn) return;
     if (!confirmDelete("这条上课记录")) return;
