@@ -293,6 +293,7 @@ const refs = {
   teacherPhone: document.getElementById("teacherPhone"),
   courseQuickAddBtn: document.getElementById("courseQuickAddBtn"),
   courseTableBody: document.getElementById("courseTableBody"),
+  classSearch: document.getElementById("classSearch"),
   addClassTypeBtn: document.getElementById("addClassTypeBtn"),
   addClassBtn: document.getElementById("addClassBtn"),
   newClassInput: document.getElementById("newClassInput"),
@@ -371,4 +372,3 @@ const refs = {
   adjustEffectiveDate: document.getElementById("adjustEffectiveDate"),
   adjustNoteInput: document.getElementById("adjustNoteInput")
 };
-

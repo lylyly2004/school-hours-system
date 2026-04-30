@@ -52,8 +52,16 @@ function populateTeacherOptions(selectedTeacher = "") {
 }
 
 function populateCourseOptions(selectedCourse = "") {
-  const options = courses.length > 0
-    ? courses.map((course) => `<option value="${course.name}" ${course.name === selectedCourse ? "selected" : ""}>${course.name}</option>`).join("")
+  const activeCourses = courses.filter((course) => isCourseEnabled(course));
+  const selectedInactiveCourse = selectedCourse
+    ? courses.find((course) => course.name === selectedCourse && !isCourseEnabled(course))
+    : null;
+  const selectableCourses = selectedInactiveCourse ? [...activeCourses, selectedInactiveCourse] : activeCourses;
+  const options = selectableCourses.length > 0
+    ? selectableCourses.map((course) => {
+      const inactiveLabel = isCourseEnabled(course) ? "" : "（已停用）";
+      return `<option value="${course.name}" ${course.name === selectedCourse ? "selected" : ""}>${course.name}${inactiveLabel}</option>`;
+    }).join("")
     : `<option value="">请先创建课程类型</option>`;
   refs.courseSelect.innerHTML = options;
   refs.retailCourseInput.innerHTML = options;
@@ -67,8 +75,16 @@ function populateClassTypeOptions(selectedType = "") {
 }
 
 function populateClassOptions(selectedClass = "") {
-  const options = classes.length > 0
-    ? classes.map((item) => `<option value="${item.name}" ${item.name === selectedClass ? "selected" : ""}>${item.name} / ${item.type}</option>`).join("")
+  const activeClasses = classes.filter((item) => isClassEnabled(item));
+  const selectedInactiveClass = selectedClass
+    ? classes.find((item) => item.name === selectedClass && !isClassEnabled(item))
+    : null;
+  const selectableClasses = selectedInactiveClass ? [...activeClasses, selectedInactiveClass] : activeClasses;
+  const options = selectableClasses.length > 0
+    ? selectableClasses.map((item) => {
+      const inactiveLabel = isClassEnabled(item) ? "" : "（已停用）";
+      return `<option value="${item.name}" ${item.name === selectedClass ? "selected" : ""}>${item.name} / ${item.type}${inactiveLabel}</option>`;
+    }).join("")
     : `<option value="">请先创建班级</option>`;
   refs.classSelect.innerHTML = options;
   refs.adjustClassSelect.innerHTML = options;
@@ -89,4 +105,3 @@ function populateRetailBaseOptions() {
   refs.transactionCampusFilter.innerHTML = campusOptions.map((item) => `<option value="${item}">${item}</option>`).join("");
   refs.transactionCategoryFilter.innerHTML = ["全部分类", "学费", ...retailCategoryOptions].map((item) => `<option value="${item}">${item}</option>`).join("");
 }
-

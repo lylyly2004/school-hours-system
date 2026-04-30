@@ -44,6 +44,9 @@ function bindEvents() {
   refs.courseQuickAddBtn.addEventListener("click", () => openManagementEditor("course-create"));
   refs.addClassTypeBtn.addEventListener("click", () => openManagementEditor("class-type-create"));
   refs.addClassBtn.addEventListener("click", addClass);
+  refs.classSearch?.addEventListener("input", () => {
+    renderClasses(refs.classSearch.value || "");
+  });
 
   refs.saveManagementEditorBtn.addEventListener("click", saveManagementEditor);
   refs.closeManagementEditorBtn.addEventListener("click", closeManagementEditor);
@@ -243,10 +246,16 @@ function bindEvents() {
       }
       return;
     }
-    const deleteBtn = event.target.closest("[data-delete-course-id]");
-    if (deleteBtn) {
-      deleteCourse(Number(deleteBtn.dataset.deleteCourseId));
+    const toggleBtn = event.target.closest("[data-toggle-course-id]");
+    if (toggleBtn) {
+      toggleCourseStatus(Number(toggleBtn.dataset.toggleCourseId));
     }
+  });
+
+  refs.classTableBody.addEventListener("click", (event) => {
+    const toggleBtn = event.target.closest("[data-toggle-class-id]");
+    if (!toggleBtn) return;
+    toggleClassStatus(Number(toggleBtn.dataset.toggleClassId));
   });
 
   refs.sessionTeacherList.addEventListener("click", (event) => {
@@ -296,6 +305,7 @@ function bindEvents() {
 }
 
 function init() {
+  normalizeSharedData();
   populateRetailBaseOptions();
   populateTeacherOptions(teachers[0]?.name || "");
   populateCourseOptions(courses[0]?.name || "");

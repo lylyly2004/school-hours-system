@@ -29,10 +29,10 @@ function getStudentLogsHtml(logs) {
 
 function renderStudentStatusFilters() {
   refs.studentStatusFilters.innerHTML = `
-    <button class="secondary-btn ${studentStatusFilter === "all" ? "active" : ""}" type="button" data-student-filter="all">全部学员</button>
-    <button class="secondary-btn ${studentStatusFilter === "active" ? "active" : ""}" type="button" data-student-filter="active">在读学员</button>
-    <button class="secondary-btn ${studentStatusFilter === "paused" ? "active" : ""}" type="button" data-student-filter="paused">停课学员</button>
-    <button class="secondary-btn ${studentStatusFilter === "refunded" ? "active" : ""}" type="button" data-student-filter="refunded">退费学员</button>
+    <button class="secondary-btn ${studentStatusFilter === "all" ? "active" : ""}" type="button" data-student-filter="all">\u5168\u90e8\u5b66\u5458</button>
+    <button class="secondary-btn ${studentStatusFilter === "active" ? "active" : ""}" type="button" data-student-filter="active">\u5728\u8bfb\u5b66\u5458</button>
+    <button class="secondary-btn ${studentStatusFilter === "paused" ? "active" : ""}" type="button" data-student-filter="paused">\u505c\u8bfe\u5b66\u5458</button>
+    <button class="secondary-btn ${studentStatusFilter === "refunded" ? "active" : ""}" type="button" data-student-filter="refunded">\u9000\u8d39\u5b66\u5458</button>
   `;
 }
 
@@ -58,18 +58,18 @@ function renderStudents(keyword = "") {
   refs.studentTotalCount.textContent = String(activeStudents.length);
   refs.studentClassCount.textContent = String(activeClasses.length);
   refs.studentBirthdayCount.textContent = String(birthdayCount);
-  refs.resultCount.textContent = `${filtered.length} 位学员`;
+  refs.resultCount.textContent = `${filtered.length} \u4f4d\u5b66\u5458`;
   renderStudentStatusFilters();
 
   if (filtered.length === 0) {
-    refs.studentTableBody.innerHTML = `<tr><td colspan="9">当前没有匹配的学员档案。</td></tr>`;
+    refs.studentTableBody.innerHTML = `<tr><td colspan="9">\u5f53\u524d\u6ca1\u6709\u5339\u914d\u7684\u5b66\u5458\u6863\u6848</td></tr>`;
     return;
   }
 
   refs.studentTableBody.innerHTML = filtered.map((record) => {
     const totalHours = getEnrollmentTotalHours(record);
     const remaining = getEnrollmentRemainingHours(record);
-    const statusLabel = record.studentStatus === "paused" ? "停课中" : record.studentStatus === "refunded" ? "已退费" : "在读";
+    const statusLabel = record.studentStatus === "paused" ? "\u505c\u8bfe\u4e2d" : record.studentStatus === "refunded" ? "\u5df2\u9000\u8d39" : "\u5728\u8bfb";
     const statusClass = record.studentStatus === "active" ? "status-normal" : "status-warning";
     return `
       <tr>
@@ -272,4 +272,3 @@ function updateStudentLifecycle(recordId, nextStatus) {
     showToast("学员已退费，剩余课时已清零，流水已同步");
   }
 }
-

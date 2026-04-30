@@ -787,9 +787,9 @@ input {
 }
 
 .student-filter-bar .secondary-btn.active {
-  color: var(--panel-strong);
-  background: var(--accent-strong);
-  border-color: var(--accent-strong);
+  color: #fff;
+  background: var(--brand);
+  border-color: var(--brand);
 }
 
 .class-type-editor {
@@ -797,6 +797,10 @@ input {
   gap: 12px;
   margin: 14px 0 4px;
   align-items: center;
+}
+
+.class-search-box {
+  min-width: 240px;
 }
 
 .class-type-editor input {

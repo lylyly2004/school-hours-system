@@ -41,7 +41,7 @@ function saveManagementEditor() {
       showToast("该课程类型已存在");
       return;
     }
-    courses.unshift({ id: uid(), name: value });
+    courses.unshift({ id: uid(), name: value, status: "active" });
     populateCourseOptions(value);
     renderCourseManagementList();
     renderTransactions();
@@ -57,7 +57,9 @@ function saveManagementEditor() {
       showToast("该课程类型已存在");
       return;
     }
-    courses = courses.map((item) => item.id === editingCourseId ? { ...item, name: value } : item);
+    courses = courses.map((item) => item.id === editingCourseId
+      ? { ...item, name: value, status: item.status || "active" }
+      : { ...item, status: item.status || "active" });
     renameCourseAcrossSystem(target.name, value);
     populateCourseOptions(value);
     renderCourseManagementList();
@@ -77,6 +79,8 @@ function saveManagementEditor() {
   }
   classTypeOptions.push(value);
   populateClassTypeOptions(value);
+  populateClassOptions(refs.classSelect?.value || "");
+  renderClasses(refs.classSearch?.value || "");
   closeManagementEditor();
   showToast("班级类型已添加");
 }

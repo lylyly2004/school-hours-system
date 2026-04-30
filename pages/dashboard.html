@@ -407,7 +407,11 @@
                 <h3>班级管理</h3>
               </div>
               <div class="inline-actions">
-                <button class="secondary-btn" type="button" id="addClassTypeBtn">新建班级类型</button>
+                <label class="search-box class-search-box">
+                  <input type="search" id="classSearch" placeholder="搜索班级名称" autocomplete="off">
+                  <span>搜索</span>
+                </label>
+                <button class="primary-btn" type="button" id="addClassTypeBtn">新建班级类型</button>
                 <button class="primary-btn" type="button" id="addClassBtn">新建班级</button>
               </div>
             </div>
@@ -416,7 +420,7 @@
               <div class="section-head compact-head">
                 <div>
                   <h3>班级设置</h3>
-                  <p class="form-helper">班级名称和班级类型在这里维护，后续新生报名时可以直接选择已创建班级。</p>
+                  <p class="form-helper">班级名称和班级类型在这里维护，新生报名、学员转班和上课管理会同步读取这里的班级数据。</p>
                 </div>
               </div>
 
@@ -438,8 +442,10 @@
                   <tr>
                     <th>班级名称</th>
                     <th>班级类型</th>
+                    <th>状态</th>
                     <th>当前授课老师</th>
                     <th>在读学员</th>
+                    <th>操作</th>
                   </tr>
                 </thead>
                 <tbody id="classTableBody"></tbody>

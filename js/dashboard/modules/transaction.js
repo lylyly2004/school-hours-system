@@ -10,9 +10,9 @@ function getFilteredTransactions() {
 
     if (from && record.date < from) return false;
     if (to && record.date > to) return false;
-    if (campus && campus !== "鍏ㄩ儴鏍″尯" && record.campus !== campus) return false;
-    if (course && course !== "鍏ㄩ儴璇剧▼" && record.course !== course) return false;
-    if (category && category !== "鍏ㄩ儴鍒嗙被" && record.category !== category) return false;
+    if (campus && campus !== "全部校区" && record.campus !== campus) return false;
+    if (course && course !== "全部课程" && record.course !== course) return false;
+    if (category && category !== "全部分类" && record.category !== category) return false;
     if (studentKeyword && !String(record.studentName || "").includes(studentKeyword)) return false;
     if (itemKeyword && !String(record.itemName || "").includes(itemKeyword)) return false;
     return true;
@@ -22,8 +22,12 @@ function getFilteredTransactions() {
 function renderTransactions() {
   const filtered = getFilteredTransactions();
   const total = filtered.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  const tuition = filtered.filter((item) => item.category === "瀛﹁垂").reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  const retail = filtered.filter((item) => item.type === "鏁欐潗闆跺敭").reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const tuition = filtered
+    .filter((item) => item.category === "学费")
+    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const retail = filtered
+    .filter((item) => item.type === "教材零售")
+    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const other = total - tuition - retail;
 
   refs.transactionTotalAmount.textContent = formatMoney(total);
@@ -32,7 +36,7 @@ function renderTransactions() {
   refs.transactionOtherAmount.textContent = formatMoney(other);
 
   if (filtered.length === 0) {
-    refs.transactionTableBody.innerHTML = `<tr><td colspan="9">褰撳墠娌℃湁鍖归厤鐨勬祦姘磋褰曘€?/td></tr>`;
+    refs.transactionTableBody.innerHTML = `<tr><td colspan="9">当前没有匹配的流水记录</td></tr>`;
     return;
   }
 
@@ -55,7 +59,7 @@ function renderTodayRecords() {
   const filtered = getFilteredTodayRecords();
 
   if (filtered.length === 0) {
-    refs.todayTableBody.innerHTML = `<tr><td colspan="6">褰撳墠娌℃湁鍖归厤鐨勫姙鐞嗚褰曘€?/td></tr>`;
+    refs.todayTableBody.innerHTML = `<tr><td colspan="6">当前没有匹配的办理记录</td></tr>`;
     return;
   }
 
@@ -76,7 +80,7 @@ function getFilteredTodayRecords() {
   const courseValue = refs.todayCourseFilter.value;
   return todayRecords.filter((record) => {
     if (dateValue && record.date !== dateValue) return false;
-    if (courseValue && courseValue !== "鍏ㄩ儴璇剧▼" && record.course !== courseValue) return false;
+    if (courseValue && courseValue !== "全部课程" && record.course !== courseValue) return false;
     return true;
   });
 }

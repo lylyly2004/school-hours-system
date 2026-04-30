@@ -1,15 +1,57 @@
+function getEnrollmentHistoryCount(recordId) {
+  if (!recordId) return 0;
+  return sessionRecords.reduce((count, session) => {
+    const students = Array.isArray(session.students) ? session.students : [];
+    return count + students.filter((item) => Number(item.enrollmentId) === Number(recordId)).length;
+  }, 0);
+}
+
+function hasEnrollmentSessionHistory(recordId) {
+  return getEnrollmentHistoryCount(recordId) > 0;
+}
+
+function setEnrollmentFieldLockState(isLocked) {
+  refs.courseSelect.disabled = isLocked;
+  refs.classSelect.disabled = isLocked;
+  refs.teacherSelect.disabled = isLocked;
+  refs.packageSelect.disabled = isLocked;
+}
+
+function getEnrollmentEditHint(record, isLocked) {
+  if (!record) {
+    return "\u5f53\u524d\u4e3a\u65b0\u589e\u62a5\u540d\u72b6\u6001\uff0c\u53ef\u76f4\u63a5\u586b\u5199\u540e\u63d0\u4ea4\u3002";
+  }
+
+  if (isLocked) {
+    return `\u5f53\u524d\u6b63\u5728\u7f16\u8f91 ${record.studentName} \u7684\u62a5\u540d\u8bb0\u5f55\u3002\u8be5\u5b66\u5458\u5df2\u6709\u4e0a\u8bfe\u8bb0\u5f55\uff0c\u8bfe\u7a0b / \u73ed\u7ea7 / \u8001\u5e08 / \u8bfe\u65f6\u5305\u5df2\u9501\u5b9a\uff1b\u5982\u9700\u8c03\u6574\uff0c\u8bf7\u524d\u5f80\u5b66\u5458\u7ba1\u7406\u4f7f\u7528\u8f6c\u73ed\u6216\u6362\u8001\u5e08\u529f\u80fd\u3002`;
+  }
+
+  return `\u5f53\u524d\u6b63\u5728\u7f16\u8f91 ${record.studentName} \u7684\u62a5\u540d\u8bb0\u5f55\uff0c\u4fee\u6539\u540e\u70b9\u51fb\u201c\u4fdd\u5b58\u4fee\u6539\u201d\u3002`;
+}
+
+function refreshEnrollmentLinkedViews() {
+  renderEnrollmentRecords();
+  renderBirthdayRecords();
+  renderStudents(refs.studentSearch.value || "");
+  renderRenewalList();
+  renderClasses(refs.classSearch?.value || "");
+  renderSessionWorkspace();
+  renderTodayRecords();
+}
+
 function resetEnrollmentForm() {
   editingEnrollmentId = null;
-  refs.enrollmentEditHint.textContent = "当前为新增报名状态，可直接填写后提交。";
-  refs.saveEnrollmentBtn.textContent = "提交按钮";
+  setEnrollmentFieldLockState(false);
+  refs.enrollmentEditHint.textContent = getEnrollmentEditHint(null, false);
+  refs.saveEnrollmentBtn.textContent = "\u63d0\u4ea4\u6309\u94ae";
   refs.enrollDateInput.value = getTodayString();
   refs.studentNameInput.value = "";
   refs.parentNameInput.value = "";
   refs.parentPhoneInput.value = "";
   refs.studentAgeInput.value = "";
   refs.birthMonthInput.value = "";
-  populateCourseOptions(courses[0]?.name || "");
-  populateClassOptions(classes[0]?.name || "");
+  populateCourseOptions(courses.find((item) => isCourseEnabled(item))?.name || "");
+  populateClassOptions(classes.find((item) => isClassEnabled(item))?.name || "");
   populateTeacherOptions(teachers[0]?.name || "");
   populatePackageOptions(chargePackages[0]?.name || "");
   refs.giftHoursInput.value = "0";
@@ -17,20 +59,25 @@ function resetEnrollmentForm() {
   refs.remarkInput.value = "";
 }
 
-function syncEnrollmentToToday(record, type = "新生报名") {
+function syncEnrollmentToToday(record, type = "\u65b0\u751f\u62a5\u540d") {
   todayRecords.unshift({
     id: uid(),
     date: record.enrollDate || getTodayString(),
-    time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false }),
+    time: new Date().toLocaleTimeString("zh-CN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }),
     item: type,
     target: record.studentName,
     course: record.courseName,
-    status: "已完成"
+    status: "\u5df2\u5b8c\u6210"
   });
 }
 
 function renderEnrollmentRecords() {
-  refs.enrollmentCount.textContent = `${enrollmentRecords.length} 条记录`;
+  refs.enrollmentCount.textContent = `${enrollmentRecords.length} \u6761\u8bb0\u5f55`;
+
   refs.enrollmentTableBody.innerHTML = enrollmentRecords.map((record) => `
     <tr>
       <td>${record.enrollDate || "-"}</td>
@@ -39,22 +86,22 @@ function renderEnrollmentRecords() {
       <td>${record.courseName || "-"}</td>
       <td>${record.className || "-"}</td>
       <td>${record.packageName || "-"}</td>
-      <td>${Number(record.giftHoursTotal || 0)} 课时</td>
+      <td>${Number(record.giftHoursTotal || 0)} \u8bfe\u65f6</td>
       <td>${record.teacherName || "-"}</td>
       <td>
-        <button class="table-edit-btn" type="button" data-edit-enrollment-id="${record.id}">编辑</button>
-        <button class="table-detail-btn" type="button" data-detail-enrollment-id="${record.id}">详情</button>
-        <button class="table-action-btn" type="button" data-delete-enrollment-id="${record.id}">删除</button>
+        <button class="table-edit-btn" type="button" data-edit-enrollment-id="${record.id}">\u7f16\u8f91</button>
+        <button class="table-detail-btn" type="button" data-detail-enrollment-id="${record.id}">\u8be6\u60c5</button>
+        <button class="table-action-btn" type="button" data-delete-enrollment-id="${record.id}">\u5220\u9664</button>
       </td>
     </tr>
     <tr class="detail-row hidden" id="detail-row-${record.id}">
       <td colspan="9">
         <div class="record-detail-box">
-          <div><strong>联系电话：</strong>${record.parentPhone || "-"}</div>
-          <div><strong>学员年龄：</strong>${record.studentAge || "-"}</div>
-          <div><strong>出生日期：</strong>${record.birthMonth || "-"}</div>
-          <div><strong>课时说明：</strong>${record.packageNote || "-"}</div>
-          <div><strong>备注事项：</strong>${record.remark || "-"}</div>
+          <div><strong>\u8054\u7cfb\u7535\u8bdd\uff1a</strong>${record.parentPhone || "-"}</div>
+          <div><strong>\u5b66\u5458\u5e74\u9f84\uff1a</strong>${record.studentAge || "-"}</div>
+          <div><strong>\u51fa\u751f\u65e5\u671f\uff1a</strong>${record.birthMonth || "-"}</div>
+          <div><strong>\u8bfe\u65f6\u8bf4\u660e\uff1a</strong>${record.packageNote || "-"}</div>
+          <div><strong>\u5907\u6ce8\u4e8b\u9879\uff1a</strong>${record.remark || "-"}</div>
         </div>
       </td>
     </tr>
@@ -62,11 +109,13 @@ function renderEnrollmentRecords() {
 }
 
 function loadEnrollmentForEdit(recordId) {
-  const record = enrollmentRecords.find((item) => item.id === recordId);
+  const record = enrollmentRecords.find((item) => Number(item.id) === Number(recordId));
   if (!record) return;
+
+  const isLocked = hasEnrollmentSessionHistory(record.id);
   editingEnrollmentId = record.id;
-  refs.enrollmentEditHint.textContent = `当前正在编辑：${record.studentName} 的报名记录，修改后点击“保存修改”。`;
-  refs.saveEnrollmentBtn.textContent = "保存修改";
+  refs.enrollmentEditHint.textContent = getEnrollmentEditHint(record, isLocked);
+  refs.saveEnrollmentBtn.textContent = "\u4fdd\u5b58\u4fee\u6539";
   refs.enrollDateInput.value = record.enrollDate || "";
   refs.studentNameInput.value = record.studentName || "";
   refs.parentNameInput.value = record.parentName || "";
@@ -80,12 +129,18 @@ function loadEnrollmentForEdit(recordId) {
   refs.giftHoursInput.value = String(record.giftHoursTotal || 0);
   refs.packageNoteInput.value = record.packageNote || "";
   refs.remarkInput.value = record.remark || "";
+  setEnrollmentFieldLockState(isLocked);
   switchPage("enrollment");
   switchBusinessTab("registration");
 }
 
 function saveEnrollment() {
   const isEditing = Boolean(editingEnrollmentId);
+  const originalRecord = isEditing
+    ? enrollmentRecords.find((record) => Number(record.id) === Number(editingEnrollmentId))
+    : null;
+  const isLocked = originalRecord ? hasEnrollmentSessionHistory(originalRecord.id) : false;
+
   const payload = {
     enrollDate: refs.enrollDateInput.value,
     studentName: refs.studentNameInput.value.trim(),
@@ -104,15 +159,35 @@ function saveEnrollment() {
   };
 
   if (!payload.enrollDate || !payload.studentName || !payload.parentName || !payload.parentPhone || !payload.studentAge || !payload.birthMonth || !payload.courseName || !payload.className || !payload.teacherName || !payload.packageName) {
-    showToast("请先完整填写新生报名的必填信息");
+    showToast("\u8bf7\u5148\u5b8c\u6574\u586b\u5199\u65b0\u751f\u62a5\u540d\u7684\u5fc5\u586b\u4fe1\u606f");
+    return;
+  }
+
+  if (isLocked && originalRecord) {
+    payload.courseName = originalRecord.courseName;
+    payload.className = originalRecord.className;
+    payload.teacherName = originalRecord.teacherName;
+    payload.packageName = originalRecord.packageName;
+    payload.paidHours = Number(originalRecord.paidHours || 0);
+  }
+
+  const selectedCourse = courses.find((item) => item.name === payload.courseName);
+  const selectedClass = classes.find((item) => item.name === payload.className);
+  if (selectedCourse && !isCourseEnabled(selectedCourse)) {
+    showToast("\u5f53\u524d\u6240\u9009\u8bfe\u7a0b\u5df2\u505c\u7528\uff0c\u8bf7\u91cd\u65b0\u9009\u62e9\u8bfe\u7a0b");
+    return;
+  }
+  if (selectedClass && !isClassEnabled(selectedClass)) {
+    showToast("\u5f53\u524d\u6240\u9009\u73ed\u7ea7\u5df2\u505c\u7528\uff0c\u8bf7\u91cd\u65b0\u9009\u62e9\u73ed\u7ea7");
     return;
   }
 
   if (isEditing) {
-    enrollmentRecords = enrollmentRecords.map((record) => record.id === editingEnrollmentId ? {
-      ...record,
-      ...payload
-    } : record);
+    enrollmentRecords = enrollmentRecords.map((record) => (
+      Number(record.id) === Number(editingEnrollmentId)
+        ? { ...record, ...payload }
+        : record
+    ));
   } else {
     enrollmentRecords.unshift({
       id: uid(),
@@ -122,30 +197,26 @@ function saveEnrollment() {
       renewalLogs: [],
       ...payload
     });
-    syncEnrollmentToToday(payload, "新生报名");
+    syncEnrollmentToToday(payload, "\u65b0\u751f\u62a5\u540d");
   }
 
   resetEnrollmentForm();
-  renderEnrollmentRecords();
-  renderBirthdayRecords();
-  renderStudents(refs.studentSearch.value || "");
-  renderRenewalList();
-  renderClasses();
-  renderSessionWorkspace();
-  renderTodayRecords();
-  showToast(isEditing ? "报名记录已更新" : "新生报名已提交");
+  refreshEnrollmentLinkedViews();
+  showToast(isEditing ? "\u62a5\u540d\u8bb0\u5f55\u5df2\u66f4\u65b0\uff0c\u5b66\u5458\u6863\u6848\u5df2\u540c\u6b65" : "\u65b0\u751f\u62a5\u540d\u5df2\u63d0\u4ea4\uff0c\u5b66\u5458\u6863\u6848\u5df2\u540c\u6b65");
 }
 
 function getUpcomingBirthdayInfo(birthValue) {
   if (!birthValue) return null;
   const birthDate = new Date(birthValue);
   if (Number.isNaN(birthDate.getTime())) return null;
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
   if (nextBirthday < today) {
     nextBirthday.setFullYear(today.getFullYear() + 1);
   }
+
   const diffDays = Math.round((nextBirthday - today) / (1000 * 60 * 60 * 24));
   if (diffDays < 0 || diffDays > 7) return null;
   return diffDays;
@@ -154,7 +225,7 @@ function getUpcomingBirthdayInfo(birthValue) {
 function formatBirthdayLabel(birthValue) {
   const birthDate = new Date(birthValue);
   if (Number.isNaN(birthDate.getTime())) return "-";
-  return `${birthDate.getMonth() + 1}月${birthDate.getDate()}日`;
+  return `${birthDate.getMonth() + 1}\u6708${birthDate.getDate()}\u65e5`;
 }
 
 function renderBirthdayRecords() {
@@ -165,18 +236,17 @@ function renderBirthdayRecords() {
     .sort((a, b) => a.diffDays - b.diffDays);
 
   if (records.length === 0) {
-    refs.birthdayTableBody.innerHTML = `<tr><td colspan="5">当前没有未来 7 天内过生日的学员。</td></tr>`;
+    refs.birthdayTableBody.innerHTML = `<tr><td colspan="5">\u5f53\u524d\u6ca1\u6709\u672a\u6765 7 \u5929\u5185\u8fc7\u751f\u65e5\u7684\u5b66\u5458\u3002</td></tr>`;
     return;
   }
 
   refs.birthdayTableBody.innerHTML = records.map((record) => `
     <tr>
       <td>${record.studentName}</td>
-      <td>${formatBirthdayLabel(record.birthMonth)}${record.diffDays === 0 ? "（今天）" : `（${record.diffDays} 天后）`}</td>
+      <td>${formatBirthdayLabel(record.birthMonth)}${record.diffDays === 0 ? "\uff08\u4eca\u5929\uff09" : `\uff08${record.diffDays} \u5929\u540e\uff09`}</td>
       <td>${record.className || "-"}</td>
       <td>${birthdayNotes[record.studentName] || "-"}</td>
-      <td><button class="table-detail-btn" type="button" data-birthday-note="${record.studentName}">添加备注</button></td>
+      <td><button class="table-detail-btn" type="button" data-birthday-note="${record.studentName}">\u6dfb\u52a0\u5907\u6ce8</button></td>
     </tr>
   `).join("");
 }
-

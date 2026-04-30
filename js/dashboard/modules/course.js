@@ -3,15 +3,22 @@ function renderCourseManagementList() {
     refs.courseTableBody.innerHTML = `<tr><td colspan="2">当前还没有课程类型</td></tr>`;
     return;
   }
-  refs.courseTableBody.innerHTML = courses.map((course) => `
-    <tr>
-      <td>${course.name}</td>
-      <td>
-        <button class="table-edit-btn" type="button" data-edit-course-id="${course.id}">修改</button>
-        <button class="table-action-btn" type="button" data-delete-course-id="${course.id}">删除</button>
-      </td>
-    </tr>
-  `).join("");
+
+  refs.courseTableBody.innerHTML = courses.map((course) => {
+    const enabled = isCourseEnabled(course);
+    const statusLabel = enabled ? "启用中" : "已停用";
+    const toggleLabel = enabled ? "停用" : "启用";
+    const toggleClass = enabled ? "table-action-btn" : "table-edit-btn";
+    return `
+      <tr>
+        <td>${course.name}<span class="table-note"> ${statusLabel}</span></td>
+        <td>
+          <button class="table-edit-btn" type="button" data-edit-course-id="${course.id}">修改</button>
+          <button class="${toggleClass}" type="button" data-toggle-course-id="${course.id}">${toggleLabel}</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
 }
 
 function renameCourseAcrossSystem(oldName, newName) {
@@ -33,16 +40,35 @@ function getCourseUsageSummary(courseName) {
   if (summary.retail) messages.push(`零售记录 ${summary.retail} 条`);
   if (summary.transactions) messages.push(`流水 ${summary.transactions} 条`);
   if (summary.today) messages.push(`今日办理 ${summary.today} 条`);
-  return { summary, message: messages.length > 0 ? messages.join("、") : "当前没有业务数据在使用" };
+  return {
+    summary,
+    message: messages.length > 0 ? messages.join("、") : "当前没有业务数据在使用"
+  };
 }
 
-function deleteCourse(courseId) {
+function toggleCourseStatus(courseId) {
   const target = courses.find((item) => item.id === courseId);
   if (!target) return;
+
+  const nextStatus = isCourseEnabled(target) ? "inactive" : "active";
+  const actionLabel = nextStatus === "inactive" ? "停用" : "启用";
   const usageInfo = getCourseUsageSummary(target.name);
-  if (!window.confirm(`确认删除课程“${target.name}”吗？\n当前正在使用的位置：${usageInfo.message}`)) return;
-  courses = courses.filter((item) => item.id !== courseId);
-  populateCourseOptions(courses[0]?.name || "");
+
+  if (!window.confirm(`确认${actionLabel}课程“${target.name}”吗？\n当前关联数据：${usageInfo.message}`)) {
+    return;
+  }
+
+  courses = courses.map((item) => (
+    item.id === courseId
+      ? { ...item, status: nextStatus }
+      : { ...item, status: item.status || "active" }
+  ));
+
+  populateCourseOptions(refs.courseSelect.value || "");
   renderCourseManagementList();
-  showToast("课程已删除，历史记录中的原课程名称会保留");
+  renderTransactions();
+
+  showToast(nextStatus === "inactive"
+    ? "课程已停用，历史数据保留，新报名将不可再选择"
+    : "课程已启用，可重新在新生报名中选择");
 }
