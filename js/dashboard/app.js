@@ -1,4 +1,4 @@
-function bindEvents() {
+﻿function bindEvents() {
   refs.menuParents.forEach((button) => {
     button.addEventListener("click", () => {
       const group = button.dataset.parent;
@@ -71,7 +71,7 @@ function bindEvents() {
   refs.filterTodayBtn.addEventListener("click", renderTodayRecords);
   refs.resetTodayBtn.addEventListener("click", () => {
     refs.todayDateFilter.value = "";
-    refs.todayCourseFilter.value = "全部课程";
+    refs.todayCourseFilter.value = "鍏ㄩ儴璇剧▼";
     renderTodayRecords();
   });
 
@@ -79,9 +79,9 @@ function bindEvents() {
   refs.resetTransactionBtn.addEventListener("click", () => {
     refs.transactionDateFrom.value = "";
     refs.transactionDateTo.value = "";
-    refs.transactionCampusFilter.value = "全部校区";
-    refs.transactionCourseFilter.value = "全部课程";
-    refs.transactionCategoryFilter.value = "全部分类";
+    refs.transactionCampusFilter.value = "鍏ㄩ儴鏍″尯";
+    refs.transactionCourseFilter.value = "鍏ㄩ儴璇剧▼";
+    refs.transactionCategoryFilter.value = "鍏ㄩ儴鍒嗙被";
     refs.transactionStudentKeyword.value = "";
     refs.transactionItemKeyword.value = "";
     renderTransactions();
@@ -106,9 +106,7 @@ function bindEvents() {
   refs.closeSessionTeacherModalBtn.addEventListener("click", () => closeModal(refs.sessionTeacherModal));
   refs.sessionTeacherMask.addEventListener("click", () => closeModal(refs.sessionTeacherModal));
   refs.sessionSelectAllBtn.addEventListener("click", () => {
-    const candidates = enrollmentRecords
-      .filter((record) => isStudentActive(record) && record.teacherName === selectedSessionTeacherName && record.className === selectedSessionClassName)
-      .map((record) => record.id);
+    const candidates = getSessionSelectableStudents().map((record) => Number(record.id));
     selectedSessionStudentIds = candidates;
     renderSessionStudents();
   });
@@ -179,7 +177,7 @@ function bindEvents() {
       renderBirthdayRecords();
       renderRenewalList();
       renderSessionWorkspace();
-      showToast("报名记录已删除");
+      showToast("报名记录已删除。")
     }
   });
 
@@ -192,7 +190,7 @@ function bindEvents() {
     if (nextNote === null) return;
     birthdayNotes[name] = nextNote.trim();
     renderBirthdayRecords();
-    showToast("生日备注已更新");
+    showToast("生日备注已更新。")
   });
 
   refs.retailTableBody.addEventListener("click", (event) => {
@@ -214,7 +212,7 @@ function bindEvents() {
       transactions = transactions.filter((item) => !(item.sourceType === "retail" && item.sourceId === retailId));
       renderRetailRecords();
       renderTransactions();
-      showToast("零售记录已删除，并已同步更新流水");
+      showToast("闆跺敭璁板綍宸插垹闄わ紝骞跺凡鍚屾鏇存柊娴佹按");
     }
   });
 
@@ -232,7 +230,7 @@ function bindEvents() {
       populateTeacherOptions(teachers[0]?.name || "");
       renderTeachers();
       renderSessionTeacherPicker();
-      showToast("教师已删除");
+      showToast("教师已删除。")
     }
   });
 
@@ -288,13 +286,7 @@ function bindEvents() {
     const deleteBtn = event.target.closest("[data-delete-session-id]");
     if (!deleteBtn) return;
     if (!confirmDelete("这条上课记录")) return;
-    const sessionId = Number(deleteBtn.dataset.deleteSessionId);
-    sessionRecords = sessionRecords.filter((item) => item.id !== sessionId);
-    renderSessionWorkspace();
-    renderTeachers();
-    renderStudents(refs.studentSearch.value || "");
-    renderRenewalList();
-    showToast("上课记录已删除");
+    deleteSessionRecord(Number(deleteBtn.dataset.deleteSessionId));
   });
 
   refs.renewalList.addEventListener("click", (event) => {
@@ -331,7 +323,7 @@ function init() {
   renderTransactions();
   renderSessionTeacherPicker();
   refs.todayDateFilter.value = getTodayString();
-  refs.todayCourseFilter.value = "全部课程";
+  refs.todayCourseFilter.value = "鍏ㄩ儴璇剧▼";
   updateHeader();
   bindEvents();
 }
