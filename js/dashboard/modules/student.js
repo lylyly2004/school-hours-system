@@ -1,196 +1,436 @@
+let currentStudentDetailId = null;
+let currentStudentDetailPage = 1;
+const STUDENT_DETAIL_SESSION_PAGE_SIZE = 10;
+
 function getStudentChangeLogs(record, type) {
-  const logs = Array.isArray(record.changeLogs) ? record.changeLogs : [];
-  if (!type) return logs;
-  return logs.filter((item) => item.changeType === type);
+  const logs = Array.isArray(record?.changeLogs) ? record.changeLogs : [];
+  return type ? logs.filter((item) => item.changeType === type) : logs;
 }
 
 function getStudentLifecycleLogs(record, status) {
-  const logs = Array.isArray(record.lifecycleLogs) ? record.lifecycleLogs : [];
-  if (!status) return logs;
-  return logs.filter((item) => item.status === status);
+  const logs = Array.isArray(record?.lifecycleLogs) ? record.lifecycleLogs : [];
+  return status ? logs.filter((item) => item.status === status) : logs;
 }
 
 function getStudentRenewalLogs(record) {
-  return Array.isArray(record.renewalLogs) ? record.renewalLogs : [];
+  return Array.isArray(record?.renewalLogs) ? record.renewalLogs : [];
 }
 
-function getStudentRecentSessions(record, limit = 5) {
+function getStudentAllSessions(record) {
   if (!record) return [];
-  return sessionRecords
+  const totalHours = getEnrollmentTotalHours(record);
+  const chronologicalRecords = sessionRecords
     .filter((session) => {
       const students = Array.isArray(session.students) ? session.students : [];
       return students.some((item) => Number(item.enrollmentId) === Number(record.id));
     })
-    .slice(0, limit)
-    .map((session) => {
-      const students = Array.isArray(session.students) ? session.students : [];
-      const matched = students.find((item) => Number(item.enrollmentId) === Number(record.id));
-      return {
-        date: session.date,
-        teacherName: session.teacherName,
-        className: session.className,
-        deductedHours: Number(matched?.deductedHours || 0)
-      };
-    });
+    .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+
+  let consumedHours = 0;
+  const mapped = chronologicalRecords.map((session) => {
+    const students = Array.isArray(session.students) ? session.students : [];
+    const matched = students.find((item) => Number(item.enrollmentId) === Number(record.id));
+    const deductedHours = Number(matched?.deductedHours || 0);
+    consumedHours += deductedHours;
+    return {
+      date: session.date || "",
+      teacherName: session.teacherName || "",
+      className: session.className || "",
+      courseName: record.courseName || "",
+      deductedHours,
+      remainingHours: Math.max(0, totalHours - consumedHours)
+    };
+  });
+
+  return mapped.reverse();
 }
 
 function formatCurrency(amount) {
-  if (amount === undefined || amount === null || amount === "") return "-";
-  return `${amount}`;
-}
-
-function getStudentLogsHtml(logs) {
-  if (!logs || logs.length === 0) return `<div class="detail-log-empty">暂无记录</div>`;
-  return `
-    <div class="change-log-list">
-      ${logs.map((log) => `
-        <div class="change-log-item">
-          <strong>${log.date || log.effectiveDate || "-"}</strong><br>
-          ${log.fromClass && log.toClass ? `<span>班级：${log.fromClass} → ${log.toClass}</span><br>` : ""}
-          ${log.fromTeacher && log.toTeacher ? `<span>教师：${log.fromTeacher} → ${log.toTeacher}</span><br>` : ""}
-          ${log.note ? `<span>备注：${log.note}</span><br>` : ""}
-          ${log.amount !== undefined ? `<span>金额：${formatCurrency(log.amount)}</span>` : ""}
-        </div>
-      `).join("")}
-    </div>
-  `;
-}
-
-function getStudentRenewalHtml(record) {
-  const logs = getStudentRenewalLogs(record);
-  if (logs.length === 0) return `<div class="detail-log-empty">暂无续费记录</div>`;
-  return `
-    <div class="change-log-list">
-      ${logs.map((log) => `
-        <div class="change-log-item">
-          <strong>${log.date || "-"}</strong><br>
-          <span>课时包：${log.packageName || "-"}</span><br>
-          <span>续费课时：${Number(log.packageHours || 0)}</span><br>
-          <span>赠送课时：${Number(log.giftHours || 0)}</span><br>
-          <span>实收金额：${formatCurrency(log.receivedAmount)}</span>
-          ${log.note ? `<br><span>备注：${log.note}</span>` : ""}
-        </div>
-      `).join("")}
-    </div>
-  `;
-}
-
-function getStudentRecentSessionHtml(record) {
-  const logs = getStudentRecentSessions(record);
-  if (logs.length === 0) return `<div class="detail-log-empty">暂无上课记录</div>`;
-  return `
-    <div class="change-log-list">
-      ${logs.map((log) => `
-        <div class="change-log-item">
-          <strong>${log.date || "-"}</strong><br>
-          <span>班级：${log.className || "-"}</span><br>
-          <span>教师：${log.teacherName || "-"}</span><br>
-          <span>本次扣课：${Number(log.deductedHours || 0)} 课时</span>
-        </div>
-      `).join("")}
-    </div>
-  `;
+  const num = Number(amount);
+  if (!Number.isFinite(num)) return "-";
+  const fixed = num.toFixed(2).replace(/\.00$/, "");
+  return `\uFFE5${fixed}`;
 }
 
 function getStudentStatusMeta(record) {
-  if (record.studentStatus === "paused") {
-    return { label: "停课中", className: "status-warning" };
+  if (record?.studentStatus === "paused") {
+    return { label: "\u505C\u8BFE\u4E2D", className: "status-warning" };
   }
-  if (record.studentStatus === "refunded") {
-    return { label: "已退费", className: "status-warning" };
+  if (record?.studentStatus === "refunded") {
+    return { label: "\u5DF2\u9000\u8D39", className: "status-warning" };
   }
-  return { label: "在读", className: "status-normal" };
-}
-
-function getStudentDetailHtml(record) {
-  const totalHours = getEnrollmentTotalHours(record);
-  const usedHours = getEnrollmentUsedHours(record);
-  const remainingHours = getEnrollmentRemainingHours(record);
-  const statusMeta = getStudentStatusMeta(record);
-
-  return `
-    <div class="record-detail-box student-detail-box">
-      <div class="detail-summary-grid">
-        <div class="detail-stat-card">
-          <span>总课时</span>
-          <strong>${totalHours}</strong>
-        </div>
-        <div class="detail-stat-card">
-          <span>已上课时</span>
-          <strong>${usedHours}</strong>
-        </div>
-        <div class="detail-stat-card">
-          <span>剩余课时</span>
-          <strong>${remainingHours}</strong>
-        </div>
-        <div class="detail-stat-card">
-          <span>当前状态</span>
-          <strong><span class="status-pill ${statusMeta.className}">${statusMeta.label}</span></strong>
-        </div>
-      </div>
-
-      <div class="detail-section">
-        <h4 class="detail-section-title">基础信息</h4>
-        <div class="detail-info-grid">
-          <div><strong>报名日期：</strong>${record.enrollDate || "-"}</div>
-          <div><strong>学员姓名：</strong>${record.studentName || "-"}</div>
-          <div><strong>家长姓名：</strong>${record.parentName || "-"}</div>
-          <div><strong>联系电话：</strong>${record.parentPhone || "-"}</div>
-          <div><strong>学员年龄：</strong>${record.studentAge || "-"}</div>
-          <div><strong>出生日期：</strong>${record.birthMonth || "-"}</div>
-          <div><strong>当前课程：</strong>${record.courseName || "-"}</div>
-          <div><strong>当前班级：</strong>${record.className || "-"}</div>
-          <div><strong>授课老师：</strong>${record.teacherName || "-"}</div>
-          <div><strong>课时包：</strong>${record.packageName || "-"}</div>
-          <div><strong>赠送课时：</strong>${Number(record.giftHoursTotal || 0)}</div>
-          <div><strong>课时说明：</strong>${record.packageNote || "-"}</div>
-        </div>
-        <div><strong>备注事项：</strong>${record.remark || "-"}</div>
-      </div>
-
-      <div class="detail-section detail-two-column">
-        <div>
-          <h4 class="detail-section-title">最近上课记录</h4>
-          ${getStudentRecentSessionHtml(record)}
-        </div>
-        <div>
-          <h4 class="detail-section-title">续费记录</h4>
-          ${getStudentRenewalHtml(record)}
-        </div>
-      </div>
-
-      <div class="detail-section detail-two-column">
-        <div>
-          <h4 class="detail-section-title">转班记录</h4>
-          ${getStudentLogsHtml(getStudentChangeLogs(record, "transfer"))}
-        </div>
-        <div>
-          <h4 class="detail-section-title">换老师记录</h4>
-          ${getStudentLogsHtml(getStudentChangeLogs(record, "teacher_change"))}
-        </div>
-      </div>
-
-      <div class="detail-section detail-two-column">
-        <div>
-          <h4 class="detail-section-title">停课记录</h4>
-          ${getStudentLogsHtml(getStudentLifecycleLogs(record, "paused"))}
-        </div>
-        <div>
-          <h4 class="detail-section-title">退费记录</h4>
-          ${getStudentLogsHtml(getStudentLifecycleLogs(record, "refunded"))}
-        </div>
-      </div>
-    </div>
-  `;
+  return { label: "\u5728\u8BFB", className: "status-normal" };
 }
 
 function renderStudentStatusFilters() {
   refs.studentStatusFilters.innerHTML = `
-    <button class="secondary-btn ${studentStatusFilter === "all" ? "active" : ""}" type="button" data-student-filter="all">全部学员</button>
-    <button class="secondary-btn ${studentStatusFilter === "active" ? "active" : ""}" type="button" data-student-filter="active">在读学员</button>
-    <button class="secondary-btn ${studentStatusFilter === "paused" ? "active" : ""}" type="button" data-student-filter="paused">停课学员</button>
-    <button class="secondary-btn ${studentStatusFilter === "refunded" ? "active" : ""}" type="button" data-student-filter="refunded">退费学员</button>
+    <button class="secondary-btn ${studentStatusFilter === "all" ? "active" : ""}" type="button" data-student-filter="all">\u5168\u90E8\u5B66\u5458</button>
+    <button class="secondary-btn ${studentStatusFilter === "active" ? "active" : ""}" type="button" data-student-filter="active">\u5728\u8BFB\u5B66\u5458</button>
+    <button class="secondary-btn ${studentStatusFilter === "paused" ? "active" : ""}" type="button" data-student-filter="paused">\u505C\u8BFE\u5B66\u5458</button>
+    <button class="secondary-btn ${studentStatusFilter === "refunded" ? "active" : ""}" type="button" data-student-filter="refunded">\u9000\u8D39\u5B66\u5458</button>
   `;
+}
+
+function ensureStudentDetailView() {
+  const panel = document.getElementById("panel-student");
+  if (!panel) return null;
+
+  let detailView = document.getElementById("studentDetailView");
+  if (!detailView) {
+    detailView = document.createElement("section");
+    detailView.id = "studentDetailView";
+    detailView.className = "student-detail-view hidden";
+    detailView.innerHTML = `
+      <article class="panel-card wide-card student-detail-page">
+        <div class="detail-page-head">
+          <div>
+            <p class="card-tag" id="studentDetailTag">\u5B66\u5458\u6863\u6848</p>
+            <h3 id="studentDetailTitle">\u5B66\u5458\u8BE6\u60C5</h3>
+            <p class="form-helper" id="studentDetailSubtitle"></p>
+          </div>
+          <button class="secondary-btn" type="button" id="studentDetailBackBtn">\u8FD4\u56DE\u5B66\u5458\u5217\u8868</button>
+        </div>
+        <div id="studentDetailBody"></div>
+      </article>
+    `;
+      panel.appendChild(detailView);
+      detailView.querySelector("#studentDetailBackBtn")?.addEventListener("click", () => closeStudentDetail());
+      detailView.addEventListener("click", (event) => {
+        const pageBtn = event.target.closest("[data-student-session-page]");
+        if (!pageBtn) return;
+        changeStudentDetailPage(Number(pageBtn.dataset.studentSessionPage));
+      });
+    }
+
+  return detailView;
+}
+
+function getStudentDetailLogList(logs, emptyText, renderer) {
+  if (!logs || logs.length === 0) {
+    return `<div class="detail-log-empty">${emptyText}</div>`;
+  }
+
+  return `
+    <div class="change-log-list">
+      ${logs.map(renderer).join("")}
+    </div>
+  `;
+}
+
+function getStudentSessionHistoryTable(record) {
+  const logs = getStudentAllSessions(record);
+  if (logs.length === 0) {
+    return `<div class="detail-log-empty">\u6682\u65E0\u4E0A\u8BFE\u8BB0\u5F55</div>`;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(logs.length / STUDENT_DETAIL_SESSION_PAGE_SIZE));
+  const safePage = Math.min(Math.max(currentStudentDetailPage, 1), totalPages);
+  currentStudentDetailPage = safePage;
+  const start = (safePage - 1) * STUDENT_DETAIL_SESSION_PAGE_SIZE;
+  const pagedLogs = logs.slice(start, start + STUDENT_DETAIL_SESSION_PAGE_SIZE);
+
+  return `
+    <div class="detail-history-table-wrap">
+      <table class="detail-history-table">
+        <thead>
+          <tr>
+            <th>\u5E8F\u53F7</th>
+            <th>\u5B66\u5458\u59D3\u540D</th>
+            <th>\u8BFE\u7A0B/\u73ED\u7EA7</th>
+            <th>\u4E0A\u8BFE\u8001\u5E08</th>
+            <th>\u8BFE\u65F6\u6D88\u8017</th>
+            <th>\u5269\u4F59\u8BFE\u65F6</th>
+            <th>\u4E0A\u8BFE\u65F6\u95F4</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pagedLogs.map((log, index) => `
+            <tr>
+              <td>${start + index + 1}</td>
+              <td>${record.studentName || "-"}</td>
+              <td>${log.courseName || "-"} / ${log.className || "-"}</td>
+              <td>${log.teacherName || "-"}</td>
+              <td>${Number(log.deductedHours || 0)}</td>
+              <td>${Number(log.remainingHours || 0)}</td>
+              <td>${log.date || "-"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div class="detail-table-pagination">
+      <button class="secondary-btn" type="button" data-student-session-page="${safePage - 1}" ${safePage <= 1 ? "disabled" : ""}>\u4E0A\u4E00\u9875</button>
+      <span class="pagination-info">\u7B2C ${safePage} / ${totalPages} \u9875</span>
+      <button class="secondary-btn" type="button" data-student-session-page="${safePage + 1}" ${safePage >= totalPages ? "disabled" : ""}>\u4E0B\u4E00\u9875</button>
+    </div>
+  `;
+}
+
+function getStudentBasicInfoTable(record) {
+  const rows = [
+    ["\u62A5\u540D\u65E5\u671F", record.enrollDate || "-"],
+    ["\u5B66\u5458\u59D3\u540D", record.studentName || "-"],
+    ["\u5BB6\u957F\u59D3\u540D", record.parentName || "-"],
+    ["\u8054\u7CFB\u7535\u8BDD", record.parentPhone || "-"],
+    ["\u5B66\u5458\u5E74\u9F84", record.studentAge || "-"],
+    ["\u51FA\u751F\u65E5\u671F", record.birthMonth || "-"],
+    ["\u62A5\u540D\u8BFE\u7A0B", record.courseName || "-"],
+    ["\u62A5\u540D\u73ED\u7EA7", record.className || "-"],
+    ["\u6388\u8BFE\u8001\u5E08", record.teacherName || "-"],
+    ["\u8BFE\u65F6\u5305", record.packageName || "-"],
+    ["\u8D60\u9001\u8BFE\u65F6", Number(record.giftHoursTotal || 0)]
+  ];
+
+  const tableRows = [];
+  for (let index = 0; index < rows.length; index += 2) {
+    const left = rows[index];
+    const right = rows[index + 1];
+    tableRows.push({ left, right });
+  }
+
+  return `
+    <div class="detail-basic-table-wrap">
+      <table class="detail-basic-table">
+        <tbody>
+          ${tableRows.map(({ left, right }) => `
+            <tr>
+              <th>${left[0]}</th>
+              <td>${left[1]}</td>
+              ${right ? `
+                <th>${right[0]}</th>
+                <td>${right[1]}</td>
+              ` : `
+                <th></th>
+                <td></td>
+              `}
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function buildStudentDetailSections(record) {
+  const sections = [];
+  const remarkRow = record.remark
+    ? `<div class="detail-remark-row"><strong>\u5907\u6CE8\u4E8B\u9879\uFF1A</strong>${record.remark}</div>`
+    : "";
+
+  sections.push(`
+    <section class="detail-section detail-block detail-block-single">
+      <h4 class="detail-section-title">\u8BFE\u65F6\u8BB0\u5F55</h4>
+      <p class="form-helper">\u4EE5\u4E0B\u4E3A\u8BE5\u5B66\u5458\u6240\u6709\u4E0A\u8BFE\u8BB0\u5F55\uFF0C\u53EF\u76F4\u63A5\u622A\u56FE\u4F5C\u4E3A\u8BFE\u65F6\u660E\u7EC6\u3002</p>
+      <div class="detail-record-count">\u5171 ${getStudentAllSessions(record).length} \u6B21\u4E0A\u8BFE</div>
+      ${getStudentSessionHistoryTable(record)}
+    </section>
+  `);
+
+  sections.push(`
+    <section class="detail-section detail-block detail-block-single">
+      <h4 class="detail-section-title">\u57FA\u7840\u4FE1\u606F</h4>
+      ${getStudentBasicInfoTable(record)}
+      ${remarkRow}
+    </section>
+  `);
+
+  const renewalLogs = getStudentRenewalLogs(record);
+  if (renewalLogs.length > 0) {
+    sections.push(`
+      <section class="detail-section detail-block detail-block-single">
+        <h4 class="detail-section-title">\u7EED\u8D39\u8BB0\u5F55</h4>
+        ${getStudentRenewalHtml(record)}
+      </section>
+    `);
+  }
+
+  const transferLogs = getStudentChangeLogs(record, "transfer");
+  const teacherChangeLogs = getStudentChangeLogs(record, "teacher_change");
+  if (transferLogs.length > 0 || teacherChangeLogs.length > 0) {
+    sections.push(`
+      <div class="detail-block-grid">
+        ${transferLogs.length > 0 ? `
+          <section class="detail-section detail-block">
+            <h4 class="detail-section-title">\u8F6C\u73ED\u8BB0\u5F55</h4>
+            ${getStudentChangeLogHtml(record, "transfer")}
+          </section>
+        ` : ""}
+        ${teacherChangeLogs.length > 0 ? `
+          <section class="detail-section detail-block">
+            <h4 class="detail-section-title">\u6362\u8001\u5E08\u8BB0\u5F55</h4>
+            ${getStudentChangeLogHtml(record, "teacher_change")}
+          </section>
+        ` : ""}
+      </div>
+    `);
+  }
+
+  const pausedLogs = getStudentLifecycleLogs(record, "paused");
+  const refundedLogs = getStudentLifecycleLogs(record, "refunded");
+  if (pausedLogs.length > 0 || refundedLogs.length > 0) {
+    sections.push(`
+      <div class="detail-block-grid">
+        ${pausedLogs.length > 0 ? `
+          <section class="detail-section detail-block">
+            <h4 class="detail-section-title">\u505C\u8BFE\u8BB0\u5F55</h4>
+            ${getStudentLifecycleHtml(record, "paused")}
+          </section>
+        ` : ""}
+        ${refundedLogs.length > 0 ? `
+          <section class="detail-section detail-block">
+            <h4 class="detail-section-title">\u9000\u8D39\u8BB0\u5F55</h4>
+            ${getStudentLifecycleHtml(record, "refunded")}
+          </section>
+        ` : ""}
+      </div>
+    `);
+  }
+
+  return sections.join("");
+}
+
+function getStudentRenewalHtml(record) {
+  return getStudentDetailLogList(
+    getStudentRenewalLogs(record),
+    "\u6682\u65E0\u7EED\u8D39\u8BB0\u5F55",
+    (log) => `
+      <div class="change-log-item">
+        <strong>${log.date || "-"}</strong><br>
+        <span>\u8BFE\u65F6\u5305\uFF1A${log.packageName || "-"}</span><br>
+        <span>\u7EED\u8D39\u8BFE\u65F6\uFF1A${Number(log.packageHours || 0)}</span><br>
+        <span>\u8D60\u9001\u8BFE\u65F6\uFF1A${Number(log.giftHours || 0)}</span><br>
+        <span>\u5B9E\u6536\u91D1\u989D\uFF1A${formatCurrency(log.receivedAmount)}</span>
+        ${log.note ? `<br><span>\u5907\u6CE8\uFF1A${log.note}</span>` : ""}
+      </div>
+    `
+  );
+}
+
+function getStudentChangeLogHtml(record, type) {
+  const titleMap = {
+    transfer: "\u6682\u65E0\u8F6C\u73ED\u8BB0\u5F55",
+    teacher_change: "\u6682\u65E0\u6362\u8001\u5E08\u8BB0\u5F55"
+  };
+
+  return getStudentDetailLogList(
+    getStudentChangeLogs(record, type),
+    titleMap[type] || "\u6682\u65E0\u53D8\u66F4\u8BB0\u5F55",
+    (log) => `
+      <div class="change-log-item">
+        <strong>${log.effectiveDate || log.date || "-"}</strong><br>
+        ${type === "transfer" ? `<span>\u73ED\u7EA7\uFF1A${log.fromClass || "-"} \u2192 ${log.toClass || "-"}</span><br>` : ""}
+        ${type === "teacher_change" ? `<span>\u6559\u5E08\uFF1A${log.fromTeacher || "-"} \u2192 ${log.toTeacher || "-"}</span><br>` : ""}
+        <span>\u5907\u6CE8\uFF1A${log.note || "-"}</span>
+      </div>
+    `
+  );
+}
+
+function getStudentLifecycleHtml(record, status) {
+  const emptyMap = {
+    paused: "\u6682\u65E0\u505C\u8BFE\u8BB0\u5F55",
+    refunded: "\u6682\u65E0\u9000\u8D39\u8BB0\u5F55"
+  };
+
+  return getStudentDetailLogList(
+    getStudentLifecycleLogs(record, status),
+    emptyMap[status] || "\u6682\u65E0\u72B6\u6001\u8BB0\u5F55",
+    (log) => `
+      <div class="change-log-item">
+        <strong>${log.date || "-"}</strong><br>
+        ${status === "refunded" ? `<span>\u9000\u8D39\u91D1\u989D\uFF1A${formatCurrency(log.amount)}</span><br>` : ""}
+        ${status === "refunded" ? `<span>\u9000\u8D39\u524D\u5269\u4F59\u8BFE\u65F6\uFF1A${Number(log.remainingBeforeRefund || 0)}</span><br>` : ""}
+        <span>\u5907\u6CE8\uFF1A${log.note || "-"}</span>
+      </div>
+    `
+  );
+}
+
+function renderStudentDetailPage() {
+  const detailView = ensureStudentDetailView();
+  if (!detailView || currentStudentDetailId === null) return;
+
+  const record = enrollmentRecords.find((item) => Number(item.id) === Number(currentStudentDetailId));
+  if (!record) {
+    closeStudentDetail();
+    return;
+  }
+
+  const title = detailView.querySelector("#studentDetailTitle");
+  const subtitle = detailView.querySelector("#studentDetailSubtitle");
+  const body = detailView.querySelector("#studentDetailBody");
+  const statusMeta = getStudentStatusMeta(record);
+  const totalHours = getEnrollmentTotalHours(record);
+  const usedHours = getEnrollmentUsedHours(record);
+  const remainingHours = getEnrollmentRemainingHours(record);
+
+  if (title) {
+    title.textContent = `${record.studentName || "\u5B66\u5458"} \u8BE6\u60C5`;
+  }
+
+  if (subtitle) {
+    subtitle.textContent = `${record.courseName || "-"} / ${record.className || "-"} / ${record.teacherName || "-"}`;
+  }
+
+  if (!body) return;
+  body.className = "student-detail-body";
+
+  body.innerHTML = `
+    <div class="detail-summary-grid">
+      <div class="detail-stat-card">
+        <span>\u603B\u8BFE\u65F6</span>
+        <strong>${totalHours}</strong>
+      </div>
+      <div class="detail-stat-card">
+        <span>\u5DF2\u4E0A\u8BFE\u65F6</span>
+        <strong>${usedHours}</strong>
+      </div>
+      <div class="detail-stat-card">
+        <span>\u5269\u4F59\u8BFE\u65F6</span>
+        <strong>${remainingHours}</strong>
+      </div>
+      <div class="detail-stat-card">
+        <span>\u5F53\u524D\u72B6\u6001</span>
+        <strong><span class="status-pill ${statusMeta.className}">${statusMeta.label}</span></strong>
+      </div>
+    </div>
+    ${buildStudentDetailSections(record)}
+  `;
+}
+
+function openStudentDetail(recordId) {
+  currentStudentDetailId = Number(recordId);
+  currentStudentDetailPage = 1;
+  const detailView = ensureStudentDetailView();
+  const contentGrid = document.querySelector("#panel-student .content-grid");
+  if (!detailView || !contentGrid) return;
+
+  contentGrid.classList.add("hidden");
+  detailView.classList.remove("hidden");
+  refs.topSearchBox.classList.add("hidden");
+  refs.pageTag.textContent = "\u6559\u5B66\u7BA1\u7406";
+  refs.pageTitle.textContent = "\u5B66\u5458\u8BE6\u60C5";
+  renderStudentDetailPage();
+}
+
+function closeStudentDetail(skipHeaderReset = false) {
+  currentStudentDetailId = null;
+  currentStudentDetailPage = 1;
+  const detailView = document.getElementById("studentDetailView");
+  const contentGrid = document.querySelector("#panel-student .content-grid");
+
+  contentGrid?.classList.remove("hidden");
+  detailView?.classList.add("hidden");
+
+  if (!skipHeaderReset) {
+    updateHeader();
+  }
+}
+
+function changeStudentDetailPage(nextPage) {
+  if (!currentStudentDetailId) return;
+  currentStudentDetailPage = nextPage;
+  renderStudentDetailPage();
 }
 
 function renderStudents(keyword = "") {
@@ -212,14 +452,18 @@ function renderStudents(keyword = "") {
   const activeStudents = enrollmentRecords.filter((record) => isStudentActive(record));
   const activeClasses = Array.from(new Set(activeStudents.map((record) => record.className).filter(Boolean)));
   const birthdayCount = enrollmentRecords.filter((record) => isStudentActive(record) && getUpcomingBirthdayInfo(record.birthMonth) !== null).length;
+
   refs.studentTotalCount.textContent = String(activeStudents.length);
   refs.studentClassCount.textContent = String(activeClasses.length);
   refs.studentBirthdayCount.textContent = String(birthdayCount);
-  refs.resultCount.textContent = `${filtered.length} 位学员`;
+  refs.resultCount.textContent = `${filtered.length} \u4F4D\u5B66\u5458`;
   renderStudentStatusFilters();
 
   if (filtered.length === 0) {
-    refs.studentTableBody.innerHTML = `<tr><td colspan="9">当前没有匹配的学员档案</td></tr>`;
+    refs.studentTableBody.innerHTML = `<tr><td colspan="9">\u5F53\u524D\u6CA1\u6709\u5339\u914D\u7684\u5B66\u5458\u6863\u6848</td></tr>`;
+    if (currentStudentDetailId !== null) {
+      renderStudentDetailPage();
+    }
     return;
   }
 
@@ -227,6 +471,7 @@ function renderStudents(keyword = "") {
     const totalHours = getEnrollmentTotalHours(record);
     const remaining = getEnrollmentRemainingHours(record);
     const statusMeta = getStudentStatusMeta(record);
+
     return `
       <tr>
         <td>${record.studentName}</td>
@@ -238,34 +483,35 @@ function renderStudents(keyword = "") {
         <td>${remaining}</td>
         <td><span class="status-pill ${statusMeta.className}">${statusMeta.label}</span></td>
         <td>
-          <button class="table-detail-btn" type="button" data-detail-student-id="${record.id}">详情</button>
-          <button class="table-shift-btn" type="button" data-transfer-student-id="${record.id}">转班</button>
-          <button class="table-edit-btn" type="button" data-change-teacher-student-id="${record.id}">换老师</button>
+          <button class="table-detail-btn" type="button" data-detail-student-id="${record.id}">\u8BE6\u60C5</button>
+          <button class="table-shift-btn" type="button" data-transfer-student-id="${record.id}">\u8F6C\u73ED</button>
+          <button class="table-edit-btn" type="button" data-change-teacher-student-id="${record.id}">\u6362\u8001\u5E08</button>
           ${record.studentStatus === "paused"
-            ? `<button class="table-pause-btn" type="button" data-resume-student-id="${record.id}">停课恢复</button>`
+            ? `<button class="table-pause-btn" type="button" data-resume-student-id="${record.id}">\u505C\u8BFE\u6062\u590D</button>`
             : record.studentStatus === "active"
-              ? `<button class="table-pause-btn" type="button" data-pause-student-id="${record.id}">停课</button>`
+              ? `<button class="table-pause-btn" type="button" data-pause-student-id="${record.id}">\u505C\u8BFE</button>`
               : ""}
-          ${record.studentStatus !== "refunded" ? `<button class="table-refund-btn" type="button" data-refund-student-id="${record.id}">退费</button>` : ""}
-        </td>
-      </tr>
-      <tr class="detail-row hidden" id="student-detail-row-${record.id}">
-        <td colspan="9">
-          ${getStudentDetailHtml(record)}
+          ${record.studentStatus !== "refunded" ? `<button class="table-refund-btn" type="button" data-refund-student-id="${record.id}">\u9000\u8D39</button>` : ""}
         </td>
       </tr>
     `;
   }).join("");
+
+  if (currentStudentDetailId !== null) {
+    renderStudentDetailPage();
+  }
 }
 
 function openStudentAdjustModal(recordId, mode) {
   const record = enrollmentRecords.find((item) => Number(item.id) === Number(recordId));
   if (!record) return;
+
   adjustingStudentId = recordId;
   studentAdjustMode = mode;
-  refs.adjustStudentName.textContent = `${record.studentName} / 当前：${record.className} / ${record.teacherName}`;
+  refs.adjustStudentName.textContent = `${record.studentName} / ${record.className} / ${record.teacherName}`;
   refs.adjustEffectiveDate.value = getTodayString();
   refs.adjustNoteInput.value = "";
+
   populateCourseOptions(record.courseName);
   populateClassOptions(record.className);
   populateTeacherOptions(record.teacherName);
@@ -273,8 +519,7 @@ function openStudentAdjustModal(recordId, mode) {
   refs.adjustCourseField.classList.add("hidden");
   refs.adjustClassField.classList.toggle("hidden", mode === "teacher");
   refs.adjustTeacherField.classList.toggle("hidden", mode === "class");
-
-  refs.studentAdjustTitle.textContent = mode === "class" ? "学员转班" : "学员换老师";
+  refs.studentAdjustTitle.textContent = mode === "class" ? "\u5B66\u5458\u8F6C\u73ED" : "\u5B66\u5458\u6362\u8001\u5E08";
   openModal(refs.studentAdjustModal);
 }
 
@@ -288,16 +533,18 @@ function saveStudentAdjust() {
   const note = refs.adjustNoteInput.value.trim();
 
   if (!effectiveDate || !nextClass || !nextTeacher) {
-    showToast("请完整填写调整信息。");
+    showToast("\u8BF7\u5B8C\u6574\u586B\u5199\u8C03\u6574\u4FE1\u606F\u3002");
     return;
   }
 
   if (nextClass === target.className && nextTeacher === target.teacherName && !note) {
-    showToast("当前没有检测到调整变化。");
+    showToast("\u5F53\u524D\u6CA1\u6709\u68C0\u6D4B\u5230\u8C03\u6574\u53D8\u5316\u3002");
     return;
   }
 
   const changeType = studentAdjustMode === "teacher" ? "teacher_change" : "transfer";
+  const actionLabel = changeType === "teacher_change" ? "\u6362\u8001\u5E08" : "\u8F6C\u73ED";
+
   const changeLog = {
     effectiveDate,
     changeType,
@@ -316,7 +563,7 @@ function saveStudentAdjust() {
       teacherName: nextTeacher,
       changeLogs: [...(Array.isArray(record.changeLogs) ? record.changeLogs : []), changeLog],
       remark: note
-        ? [record.remark, `${effectiveDate}${changeType === "teacher_change" ? "换老师" : "转班"}：${note}`].filter(Boolean).join("；")
+        ? [record.remark, `${effectiveDate}${actionLabel}\uFF1A${note}`].filter(Boolean).join("\uFF1B")
         : record.remark
     };
   });
@@ -328,38 +575,42 @@ function saveStudentAdjust() {
   renderRenewalList();
   renderSessionWorkspace();
   renderTodayRecords();
-  showToast(changeType === "teacher_change" ? "学员换老师已保存。" : "学员转班已保存。");
+  showToast(changeType === "teacher_change" ? "\u5B66\u5458\u6362\u8001\u5E08\u5DF2\u4FDD\u5B58\u3002" : "\u5B66\u5458\u8F6C\u73ED\u5DF2\u4FDD\u5B58\u3002");
 }
 
 function updateStudentLifecycle(recordId, nextStatus) {
   const target = enrollmentRecords.find((item) => Number(item.id) === Number(recordId));
   if (!target) return;
+
   if (target.studentStatus === nextStatus) {
-    showToast(nextStatus === "paused" ? "该学员当前已经是停课状态。" : "当前状态未发生变化。");
+    showToast(nextStatus === "paused" ? "\u8BE5\u5B66\u5458\u5F53\u524D\u5DF2\u7ECF\u662F\u505C\u8BFE\u72B6\u6001\u3002" : "\u5F53\u524D\u72B6\u6001\u672A\u53D1\u751F\u53D8\u5316\u3002");
     return;
   }
 
   const actionMap = {
-    active: "停课恢复",
-    paused: "停课",
-    refunded: "退费"
+    active: "\u505C\u8BFE\u6062\u590D",
+    paused: "\u505C\u8BFE",
+    refunded: "\u9000\u8D39"
   };
-  const actionLabel = actionMap[nextStatus] || "状态调整";
-  if (!window.confirm(`确认对 ${target.studentName} 执行${actionLabel}吗？历史上课记录会保留。`)) return;
+  const actionLabel = actionMap[nextStatus] || "\u72B6\u6001\u8C03\u6574";
+
+  if (!window.confirm(`\u786E\u8BA4\u5BF9 ${target.studentName} \u6267\u884C${actionLabel}\u5417\uFF1F\u5386\u53F2\u4E0A\u8BFE\u8BB0\u5F55\u4F1A\u4FDD\u7559\u3002`)) {
+    return;
+  }
 
   let refundAmount = 0;
   const remainingBeforeRefund = getEnrollmentRemainingHours(target);
   if (nextStatus === "refunded") {
-    const input = window.prompt("请输入本次退费金额", "");
+    const input = window.prompt("\u8BF7\u8F93\u5165\u672C\u6B21\u9000\u8D39\u91D1\u989D", "");
     if (input === null) return;
     refundAmount = Number(input);
     if (!Number.isFinite(refundAmount) || refundAmount < 0) {
-      showToast("请输入正确的退费金额。");
+      showToast("\u8BF7\u8F93\u5165\u6B63\u786E\u7684\u9000\u8D39\u91D1\u989D\u3002");
       return;
     }
   }
 
-  const note = window.prompt(`可选：填写${actionLabel}备注`, "") || "";
+  const note = window.prompt(`\u53EF\u9009\uFF1A\u586B\u5199${actionLabel}\u5907\u6CE8`, "") || "";
 
   enrollmentRecords = enrollmentRecords.map((record) => {
     if (Number(record.id) !== Number(recordId)) return record;
@@ -376,7 +627,7 @@ function updateStudentLifecycle(recordId, nextStatus) {
           remainingBeforeRefund: nextStatus === "refunded" ? remainingBeforeRefund : undefined
         }
       ],
-      remark: note ? [record.remark, `${getTodayString()}${actionLabel}：${note}`].filter(Boolean).join("；") : record.remark
+      remark: note ? [record.remark, `${getTodayString()}${actionLabel}\uFF1A${note}`].filter(Boolean).join("\uFF1B") : record.remark
     };
   });
 
@@ -385,12 +636,12 @@ function updateStudentLifecycle(recordId, nextStatus) {
       id: uid(),
       date: getTodayString(),
       studentName: target.studentName,
-      type: "退费",
+      type: "\u9000\u8D39",
       amount: -Math.abs(refundAmount),
-      note: note || `学员退费，剩余课时 ${remainingBeforeRefund}`,
-      campus: "总部校区",
+      note: note || `\u5B66\u5458\u9000\u8D39\uFF0C\u5269\u4F59\u8BFE\u65F6 ${remainingBeforeRefund}`,
+      campus: "\u603B\u90E8\u6821\u533A",
       course: target.courseName || "",
-      category: "学费",
+      category: "\u5B66\u8D39",
       itemName: "",
       sourceType: "refund",
       sourceId: recordId
@@ -405,10 +656,10 @@ function updateStudentLifecycle(recordId, nextStatus) {
   renderSessionWorkspace();
 
   if (nextStatus === "paused") {
-    showToast("学员已停课，课时已冻结，暂时不能记录上课。");
+    showToast("\u5B66\u5458\u5DF2\u505C\u8BFE\uFF0C\u8BFE\u65F6\u5DF2\u51BB\u7ED3\uFF0C\u6682\u65F6\u4E0D\u80FD\u8BB0\u5F55\u4E0A\u8BFE\u3002");
   } else if (nextStatus === "active") {
-    showToast("学员已恢复上课，可以继续正常记录课时。");
+    showToast("\u5B66\u5458\u5DF2\u6062\u590D\u4E0A\u8BFE\uFF0C\u53EF\u4EE5\u7EE7\u7EED\u6B63\u5E38\u8BB0\u5F55\u8BFE\u65F6\u3002");
   } else {
-    showToast("学员已退费，剩余课时已清零，流水已同步。");
+    showToast("\u5B66\u5458\u5DF2\u9000\u8D39\uFF0C\u5269\u4F59\u8BFE\u65F6\u5DF2\u6E05\u96F6\uFF0C\u6D41\u6C34\u5DF2\u540C\u6B65\u3002");
   }
 }

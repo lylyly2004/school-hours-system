@@ -125,7 +125,7 @@
   refs.studentTableBody.addEventListener("click", (event) => {
     const detailBtn = event.target.closest("[data-detail-student-id]");
     if (detailBtn) {
-      document.getElementById(`student-detail-row-${detailBtn.dataset.detailStudentId}`)?.classList.toggle("hidden");
+      openStudentDetail(Number(detailBtn.dataset.detailStudentId));
       return;
     }
     const transferBtn = event.target.closest("[data-transfer-student-id]");

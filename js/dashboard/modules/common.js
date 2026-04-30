@@ -10,6 +10,9 @@ function updateHeader() {
 }
 
 function switchPage(pageName) {
+  if (pageName !== "student" && typeof closeStudentDetail === "function") {
+    closeStudentDetail(true);
+  }
   currentPage = pageName;
   refs.menuItems.forEach((button) => button.classList.toggle("active", button.dataset.page === pageName));
   refs.contentPanels.forEach((panel) => panel.classList.toggle("active", panel.id === `panel-${pageName}`));
