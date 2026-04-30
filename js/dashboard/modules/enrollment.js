@@ -153,6 +153,9 @@ function saveEnrollment() {
     teacherName: refs.teacherSelect.value,
     packageName: refs.packageSelect.value,
     paidHours: getPackageHours(refs.packageSelect.value),
+    enrollmentPackageName: refs.packageSelect.value,
+    enrollmentPaidAmount: getPackagePrice(refs.packageSelect.value),
+    enrollmentPaidDate: refs.enrollDateInput.value,
     giftHoursTotal: Number(refs.giftHoursInput.value || 0),
     packageNote: refs.packageNoteInput.value.trim(),
     remark: refs.remarkInput.value.trim()
@@ -169,6 +172,9 @@ function saveEnrollment() {
     payload.teacherName = originalRecord.teacherName;
     payload.packageName = originalRecord.packageName;
     payload.paidHours = Number(originalRecord.paidHours || 0);
+    payload.enrollmentPackageName = originalRecord.enrollmentPackageName || originalRecord.packageName;
+    payload.enrollmentPaidAmount = Number(originalRecord.enrollmentPaidAmount ?? getPackagePrice(originalRecord.enrollmentPackageName || originalRecord.packageName || ""));
+    payload.enrollmentPaidDate = originalRecord.enrollmentPaidDate || originalRecord.enrollDate;
   }
 
   const selectedCourse = courses.find((item) => item.name === payload.courseName);
@@ -185,7 +191,13 @@ function saveEnrollment() {
   if (isEditing) {
     enrollmentRecords = enrollmentRecords.map((record) => (
       Number(record.id) === Number(editingEnrollmentId)
-        ? { ...record, ...payload }
+        ? {
+          ...record,
+          ...payload,
+          enrollmentPackageName: isLocked ? payload.enrollmentPackageName : payload.packageName,
+          enrollmentPaidAmount: isLocked ? payload.enrollmentPaidAmount : getPackagePrice(payload.packageName),
+          enrollmentPaidDate: isLocked ? payload.enrollmentPaidDate : payload.enrollDate
+        }
         : record
     ));
   } else {

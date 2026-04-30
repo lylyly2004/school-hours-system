@@ -1034,6 +1034,18 @@ th {
   gap: 22px;
 }
 
+.detail-tab-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.detail-tab-bar .secondary-btn.active {
+  color: #fff;
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
 .detail-page-head {
   display: flex;
   align-items: flex-start;

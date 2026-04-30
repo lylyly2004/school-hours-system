@@ -1,5 +1,6 @@
 let currentStudentDetailId = null;
 let currentStudentDetailPage = 1;
+let currentStudentDetailSection = "session";
 const STUDENT_DETAIL_SESSION_PAGE_SIZE = 10;
 
 function getStudentChangeLogs(record, type) {
@@ -14,6 +15,28 @@ function getStudentLifecycleLogs(record, status) {
 
 function getStudentRenewalLogs(record) {
   return Array.isArray(record?.renewalLogs) ? record.renewalLogs : [];
+}
+
+function getStudentPaymentLogs(record) {
+  if (!record) return [];
+
+  const enrollmentPayment = {
+    type: "\u62A5\u540D",
+    packageName: record.enrollmentPackageName || record.packageName || "-",
+    amount: Number(record.enrollmentPaidAmount ?? getPackagePrice(record.enrollmentPackageName || record.packageName || "")),
+    giftHours: Number(record.giftHoursTotal || 0),
+    date: record.enrollmentPaidDate || record.enrollDate || "-"
+  };
+
+  const renewalPayments = getStudentRenewalLogs(record).map((log) => ({
+    type: "\u7EED\u8D39",
+    packageName: log.packageName || "-",
+    amount: Number(log.receivedAmount || 0),
+    giftHours: Number(log.giftHours || 0),
+    date: log.date || "-"
+  }));
+
+  return [enrollmentPayment, ...renewalPayments].sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
 }
 
 function getStudentAllSessions(record) {
@@ -96,6 +119,11 @@ function ensureStudentDetailView() {
       panel.appendChild(detailView);
       detailView.querySelector("#studentDetailBackBtn")?.addEventListener("click", () => closeStudentDetail());
       detailView.addEventListener("click", (event) => {
+        const sectionBtn = event.target.closest("[data-student-detail-section]");
+        if (sectionBtn) {
+          changeStudentDetailSection(sectionBtn.dataset.studentDetailSection);
+          return;
+        }
         const pageBtn = event.target.closest("[data-student-session-page]");
         if (!pageBtn) return;
         changeStudentDetailPage(Number(pageBtn.dataset.studentSessionPage));
@@ -211,82 +239,95 @@ function getStudentBasicInfoTable(record) {
   `;
 }
 
-function buildStudentDetailSections(record) {
-  const sections = [];
+function getStudentPaymentTable(record) {
+  const logs = getStudentPaymentLogs(record);
+  if (logs.length === 0) {
+    return `<div class="detail-log-empty">\u6682\u65E0\u7F34\u8D39\u8BB0\u5F55</div>`;
+  }
+
+  return `
+    <div class="detail-history-table-wrap">
+      <table class="detail-history-table">
+        <thead>
+          <tr>
+            <th>\u5E8F\u53F7</th>
+            <th>\u529E\u7406\u7C7B\u578B</th>
+            <th>\u7F34\u8D39\u7C7B\u578B</th>
+            <th>\u8D60\u9001\u8BFE\u65F6</th>
+            <th>\u91D1\u989D</th>
+            <th>\u529E\u7406\u65E5\u671F</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${logs.map((log, index) => `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${log.type || "-"}</td>
+              <td>${log.packageName || "-"}</td>
+              <td>\u8D60\u9001\u8BFE\u65F6+${Number(log.giftHours || 0)}</td>
+              <td>${formatCurrency(log.amount)}</td>
+              <td>${log.date || "-"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function getStudentDetailTabs() {
+  const tabs = [
+    { key: "session", label: "\u8BFE\u65F6\u8BB0\u5F55" },
+    { key: "payment", label: "\u7F34\u8D39\u8BB0\u5F55" },
+    { key: "basic", label: "\u57FA\u7840\u4FE1\u606F" }
+  ];
+
+  return `
+    <div class="detail-tab-bar">
+      ${tabs.map((tab) => `
+        <button
+          class="secondary-btn ${currentStudentDetailSection === tab.key ? "active" : ""}"
+          type="button"
+          data-student-detail-section="${tab.key}"
+        >${tab.label}</button>
+      `).join("")}
+    </div>
+  `;
+}
+
+function buildStudentDetailSection(record) {
   const remarkRow = record.remark
     ? `<div class="detail-remark-row"><strong>\u5907\u6CE8\u4E8B\u9879\uFF1A</strong>${record.remark}</div>`
     : "";
 
-  sections.push(`
-    <section class="detail-section detail-block detail-block-single">
-      <h4 class="detail-section-title">\u8BFE\u65F6\u8BB0\u5F55</h4>
-      <p class="form-helper">\u4EE5\u4E0B\u4E3A\u8BE5\u5B66\u5458\u6240\u6709\u4E0A\u8BFE\u8BB0\u5F55\uFF0C\u53EF\u76F4\u63A5\u622A\u56FE\u4F5C\u4E3A\u8BFE\u65F6\u660E\u7EC6\u3002</p>
-      <div class="detail-record-count">\u5171 ${getStudentAllSessions(record).length} \u6B21\u4E0A\u8BFE</div>
-      ${getStudentSessionHistoryTable(record)}
-    </section>
-  `);
+  if (currentStudentDetailSection === "session") {
+    return `
+      <section class="detail-section detail-block detail-block-single">
+        <h4 class="detail-section-title">\u8BFE\u65F6\u8BB0\u5F55</h4>
+        <p class="form-helper">\u4EE5\u4E0B\u4E3A\u8BE5\u5B66\u5458\u6240\u6709\u4E0A\u8BFE\u8BB0\u5F55\uFF0C\u53EF\u76F4\u63A5\u622A\u56FE\u4F5C\u4E3A\u8BFE\u65F6\u660E\u7EC6\u3002</p>
+        <div class="detail-record-count">\u5171 ${getStudentAllSessions(record).length} \u6B21\u4E0A\u8BFE</div>
+        ${getStudentSessionHistoryTable(record)}
+      </section>
+    `;
+  }
 
-  sections.push(`
+  if (currentStudentDetailSection === "payment") {
+    return `
+      <section class="detail-section detail-block detail-block-single">
+        <h4 class="detail-section-title">\u7F34\u8D39\u8BB0\u5F55</h4>
+        <p class="form-helper">\u8FD9\u91CC\u4F1A\u663E\u793A\u8BE5\u5B66\u5458\u7684\u62A5\u540D\u4E0E\u7EED\u8D39\u8BB0\u5F55\u3002</p>
+        ${getStudentPaymentTable(record)}
+      </section>
+    `;
+  }
+
+  return `
     <section class="detail-section detail-block detail-block-single">
       <h4 class="detail-section-title">\u57FA\u7840\u4FE1\u606F</h4>
       ${getStudentBasicInfoTable(record)}
       ${remarkRow}
     </section>
-  `);
-
-  const renewalLogs = getStudentRenewalLogs(record);
-  if (renewalLogs.length > 0) {
-    sections.push(`
-      <section class="detail-section detail-block detail-block-single">
-        <h4 class="detail-section-title">\u7EED\u8D39\u8BB0\u5F55</h4>
-        ${getStudentRenewalHtml(record)}
-      </section>
-    `);
-  }
-
-  const transferLogs = getStudentChangeLogs(record, "transfer");
-  const teacherChangeLogs = getStudentChangeLogs(record, "teacher_change");
-  if (transferLogs.length > 0 || teacherChangeLogs.length > 0) {
-    sections.push(`
-      <div class="detail-block-grid">
-        ${transferLogs.length > 0 ? `
-          <section class="detail-section detail-block">
-            <h4 class="detail-section-title">\u8F6C\u73ED\u8BB0\u5F55</h4>
-            ${getStudentChangeLogHtml(record, "transfer")}
-          </section>
-        ` : ""}
-        ${teacherChangeLogs.length > 0 ? `
-          <section class="detail-section detail-block">
-            <h4 class="detail-section-title">\u6362\u8001\u5E08\u8BB0\u5F55</h4>
-            ${getStudentChangeLogHtml(record, "teacher_change")}
-          </section>
-        ` : ""}
-      </div>
-    `);
-  }
-
-  const pausedLogs = getStudentLifecycleLogs(record, "paused");
-  const refundedLogs = getStudentLifecycleLogs(record, "refunded");
-  if (pausedLogs.length > 0 || refundedLogs.length > 0) {
-    sections.push(`
-      <div class="detail-block-grid">
-        ${pausedLogs.length > 0 ? `
-          <section class="detail-section detail-block">
-            <h4 class="detail-section-title">\u505C\u8BFE\u8BB0\u5F55</h4>
-            ${getStudentLifecycleHtml(record, "paused")}
-          </section>
-        ` : ""}
-        ${refundedLogs.length > 0 ? `
-          <section class="detail-section detail-block">
-            <h4 class="detail-section-title">\u9000\u8D39\u8BB0\u5F55</h4>
-            ${getStudentLifecycleHtml(record, "refunded")}
-          </section>
-        ` : ""}
-      </div>
-    `);
-  }
-
-  return sections.join("");
+  `;
 }
 
 function getStudentRenewalHtml(record) {
@@ -394,13 +435,15 @@ function renderStudentDetailPage() {
         <strong><span class="status-pill ${statusMeta.className}">${statusMeta.label}</span></strong>
       </div>
     </div>
-    ${buildStudentDetailSections(record)}
+    ${getStudentDetailTabs()}
+    ${buildStudentDetailSection(record)}
   `;
 }
 
 function openStudentDetail(recordId) {
   currentStudentDetailId = Number(recordId);
   currentStudentDetailPage = 1;
+  currentStudentDetailSection = "session";
   const detailView = ensureStudentDetailView();
   const contentGrid = document.querySelector("#panel-student .content-grid");
   if (!detailView || !contentGrid) return;
@@ -416,6 +459,7 @@ function openStudentDetail(recordId) {
 function closeStudentDetail(skipHeaderReset = false) {
   currentStudentDetailId = null;
   currentStudentDetailPage = 1;
+  currentStudentDetailSection = "session";
   const detailView = document.getElementById("studentDetailView");
   const contentGrid = document.querySelector("#panel-student .content-grid");
 
@@ -430,6 +474,13 @@ function closeStudentDetail(skipHeaderReset = false) {
 function changeStudentDetailPage(nextPage) {
   if (!currentStudentDetailId) return;
   currentStudentDetailPage = nextPage;
+  renderStudentDetailPage();
+}
+
+function changeStudentDetailSection(section) {
+  if (!currentStudentDetailId) return;
+  currentStudentDetailSection = section || "session";
+  currentStudentDetailPage = 1;
   renderStudentDetailPage();
 }
 
