@@ -1015,6 +1015,67 @@ th {
   color: var(--muted);
 }
 
+.student-detail-box {
+  gap: 18px;
+}
+
+.detail-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detail-stat-card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff7ed;
+  border: 1px solid #f0e2d3;
+}
+
+.detail-stat-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.detail-stat-card strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--text);
+  font-size: 20px;
+}
+
+.detail-section {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.detail-section-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 18px;
+}
+
+.detail-two-column {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.detail-log-empty {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px dashed #e4d1bd;
+  color: var(--muted);
+}
+
 .change-log-list {
   display: grid;
   gap: 8px;
