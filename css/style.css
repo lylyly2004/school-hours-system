@@ -730,18 +730,29 @@ input {
 
 .session-student-card label {
   display: flex;
+  width: 100%;
   gap: 12px;
   align-items: flex-start;
+  justify-content: space-between;
   cursor: pointer;
 }
 
 .session-student-card input[type="checkbox"] {
   margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.session-student-toggle {
+  width: 100%;
 }
 
 .session-student-main strong,
 .session-student-side strong {
   display: block;
+}
+
+.session-student-main {
+  flex: 1;
 }
 
 .session-student-main span,

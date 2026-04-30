@@ -112,7 +112,7 @@ function renderSessionStudents() {
   refs.sessionPendingStudentCount.textContent = `${selectedSessionStudentIds.length} / ${candidates.length}`;
   refs.sessionStudentList.innerHTML = candidates.map((record) => `
     <article class="session-student-card">
-      <label>
+      <label class="session-student-toggle">
         <input
           class="session-student-checkbox"
           type="checkbox"
@@ -123,11 +123,11 @@ function renderSessionStudents() {
           <strong>${record.studentName}</strong>
           <span>${record.courseName} / ${record.className}</span>
         </div>
+        <div class="session-student-side">
+          <strong>\u5269\u4f59 ${getEnrollmentRemainingHours(record)} \u8bfe\u65f6</strong>
+          <span>\u603b\u8bfe\u65f6 ${getEnrollmentTotalHours(record)}</span>
+        </div>
       </label>
-      <div class="session-student-side">
-        <strong>\u5269\u4f59 ${getEnrollmentRemainingHours(record)} \u8bfe\u65f6</strong>
-        <span>\u603b\u8bfe\u65f6 ${getEnrollmentTotalHours(record)}</span>
-      </div>
     </article>
   `).join("");
 }
