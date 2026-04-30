@@ -111,6 +111,8 @@
     renderSessionStudents();
   });
   refs.sessionResetBtn.addEventListener("click", resetSessionSelection);
+  refs.sessionPrevPageBtn.addEventListener("click", () => changeSessionRecordPage(-1));
+  refs.sessionNextPageBtn.addEventListener("click", () => changeSessionRecordPage(1));
   refs.saveSessionBtn.addEventListener("click", saveSessionRecord);
 
   refs.studentStatusFilters.addEventListener("click", (event) => {

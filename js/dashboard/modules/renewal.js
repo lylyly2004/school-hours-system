@@ -24,6 +24,7 @@ function calculateRenewalReceivedAmount() {
   } else {
     result = receivable - Number(refs.renewalDiscountAmount.value || 0);
   }
+
   result = result < 0 ? 0 : result;
   refs.renewalReceivedInput.value = result.toFixed(0);
 }
@@ -52,7 +53,7 @@ function getRenewalPreviewRecords() {
     },
     {
       id: "sample-2",
-      studentName: "周子昊",
+      studentName: "周子昕",
       parentPhone: "13800001232",
       courseName: "琵琶",
       className: "琵琶 1对1",
@@ -81,24 +82,29 @@ function getRenewalPreviewRecords() {
   ];
 }
 
-function renderRenewalList() {
+function getRenewalDisplayRecords() {
   const actual = getRenewalStudentRecords();
-  const displayRecords = actual.length > 0
-    ? actual.map((record) => ({
-        id: record.id,
-        studentName: record.studentName,
-        parentPhone: record.parentPhone,
-        courseName: record.courseName,
-        className: record.className,
-        teacherName: record.teacherName,
-        packageName: record.packageName,
-        remainingHours: getEnrollmentRemainingHours(record),
-        usedHours: getEnrollmentUsedHours(record),
-        giftHours: record.giftHoursTotal || 0,
-        note: record.remark || "建议前台尽快联系家长，确认后续续费安排。"
-      }))
-    : getRenewalPreviewRecords();
+  if (actual.length > 0) {
+    return actual.map((record) => ({
+      id: record.id,
+      studentName: record.studentName,
+      parentPhone: record.parentPhone,
+      courseName: record.courseName,
+      className: record.className,
+      teacherName: record.teacherName,
+      packageName: record.packageName,
+      remainingHours: getEnrollmentRemainingHours(record),
+      usedHours: getEnrollmentUsedHours(record),
+      giftHours: record.giftHoursTotal || 0,
+      note: record.remark || "建议前台尽快联系家长，确认后续续费安排。",
+      sample: false
+    }));
+  }
+  return getRenewalPreviewRecords();
+}
 
+function renderRenewalList() {
+  const displayRecords = getRenewalDisplayRecords();
   refs.renewalList.innerHTML = displayRecords.map((record) => `
     <article class="renewal-item">
       <div>
@@ -142,6 +148,7 @@ function openRenewalForm(recordId) {
   const preview = getRenewalPreviewRecords().find((item) => item.id === recordId);
   const record = target || preview;
   if (!record) return;
+
   renewingStudentId = target ? target.id : null;
   refs.renewalFormTitle.textContent = `${record.studentName} 续费办理`;
   refs.renewalStudentName.value = record.studentName || "";
@@ -153,12 +160,12 @@ function openRenewalForm(recordId) {
 
 function saveRenewal() {
   if (!renewingStudentId) {
-    showToast("当前是示例续费学员，先查看流程样式即可");
+    showToast("当前是示例续费学员，先查看流程样式即可。");
     closeModal(refs.renewalFormModal);
     return;
   }
 
-  const target = enrollmentRecords.find((item) => item.id === renewingStudentId);
+  const target = enrollmentRecords.find((item) => Number(item.id) === Number(renewingStudentId));
   if (!target) return;
 
   const packageName = refs.renewalPackageSelect.value;
@@ -176,7 +183,7 @@ function saveRenewal() {
   };
 
   enrollmentRecords = enrollmentRecords.map((record) => {
-    if (record.id !== renewingStudentId) return record;
+    if (Number(record.id) !== Number(renewingStudentId)) return record;
     const renewalLogs = Array.isArray(record.renewalLogs) ? record.renewalLogs : [];
     return {
       ...record,
@@ -184,7 +191,9 @@ function saveRenewal() {
       paidHours: Number(record.paidHours || 0) + packageHours,
       giftHoursTotal: Number(record.giftHoursTotal || 0) + giftHours,
       renewalLogs: [...renewalLogs, actionRecord],
-      remark: note ? [record.remark, `${getTodayString()}续费备注：${note}`].filter(Boolean).join("；") : record.remark
+      remark: note
+        ? [record.remark, `${getTodayString()}续费备注：${note}`].filter(Boolean).join("；")
+        : record.remark
     };
   });
 
@@ -208,6 +217,6 @@ function saveRenewal() {
   renderEnrollmentRecords();
   renderTransactions();
   renderRenewalList();
-  showToast("续费已保存，学员课时和流水已同步更新");
+  renderSessionWorkspace();
+  showToast("续费已保存，学员课时和流水已同步更新。");
 }
-

@@ -1,3 +1,6 @@
+const SESSION_PAGE_SIZE = 10;
+let sessionRecordPage = 1;
+
 function getSessionSelectableStudents(teacherName = selectedSessionTeacherName, className = selectedSessionClassName) {
   if (!teacherName || !className) return [];
   return enrollmentRecords.filter((record) => {
@@ -29,12 +32,25 @@ function getTeacherAvailableClasses(teacherName) {
   ));
 }
 
+function getFilteredSessionRecords() {
+  return selectedSessionTeacherName
+    ? sessionRecords.filter((record) => record.teacherName === selectedSessionTeacherName)
+    : [];
+}
+
+function syncSessionStaticLabels() {
+  const title = refs.sessionTableBody?.closest(".panel-card")?.querySelector(".section-head.top-space h3");
+  if (title) title.textContent = "\u4e0a\u8bfe\u8bb0\u5f55";
+  if (refs.sessionPrevPageBtn) refs.sessionPrevPageBtn.textContent = "\u4e0a\u4e00\u9875";
+  if (refs.sessionNextPageBtn) refs.sessionNextPageBtn.textContent = "\u4e0b\u4e00\u9875";
+}
+
 function renderSessionTeacherPicker() {
   if (teachers.length === 0) {
     refs.sessionTeacherList.innerHTML = `
       <div class="teacher-empty-state">
-        <h4>当前没有教师信息</h4>
-        <p>请先在教师管理中添加教师。</p>
+        <h4>\u5f53\u524d\u6ca1\u6709\u6559\u5e08\u4fe1\u606f</h4>
+        <p>\u8bf7\u5148\u5728\u6559\u5e08\u7ba1\u7406\u4e2d\u6dfb\u52a0\u6559\u5e08\u3002</p>
       </div>
     `;
     return;
@@ -48,13 +64,13 @@ function renderSessionTeacherPicker() {
         <div>
           <h4>${teacher.name}</h4>
           <p class="renewal-meta">
-            教授科目：${teacher.subject || "-"}<br>
-            联系电话：${teacher.phone || "-"}<br>
-            在读学员：${studentCount} 人 / 可上课班级：${classCount} 个
+            \u6559\u6388\u79d1\u76ee\uff1a${teacher.subject || "-"}<br>
+            \u8054\u7cfb\u7535\u8bdd\uff1a${teacher.phone || "-"}<br>
+            \u5728\u8bfb\u5b66\u5458\uff1a${studentCount} \u4eba / \u53ef\u4e0a\u8bfe\u73ed\u7ea7\uff1a${classCount} \u4e2a
           </p>
         </div>
         <div class="renewal-card-actions">
-          <button class="primary-btn" type="button" data-pick-session-teacher="${teacher.name}">选择</button>
+          <button class="primary-btn" type="button" data-pick-session-teacher="${teacher.name}">\u9009\u62e9</button>
         </div>
       </article>
     `;
@@ -88,7 +104,7 @@ function renderSessionStudents() {
   selectedSessionStudentIds = selectedSessionStudentIds.filter((id) => candidateIds.includes(Number(id)));
 
   if (candidates.length === 0) {
-    refs.sessionStudentList.innerHTML = `<p class="session-empty-note">当前教师或班级下暂无可记录课时的在读学员。</p>`;
+    refs.sessionStudentList.innerHTML = `<p class="session-empty-note">\u5f53\u524d\u6559\u5e08\u6216\u73ed\u7ea7\u4e0b\u6682\u65e0\u53ef\u8bb0\u5f55\u8bfe\u65f6\u7684\u5728\u8bfb\u5b66\u5458\u3002</p>`;
     refs.sessionPendingStudentCount.textContent = "0 / 0";
     return;
   }
@@ -109,8 +125,8 @@ function renderSessionStudents() {
         </div>
       </label>
       <div class="session-student-side">
-        <strong>剩余 ${getEnrollmentRemainingHours(record)} 课时</strong>
-        <span>总课时 ${getEnrollmentTotalHours(record)}</span>
+        <strong>\u5269\u4f59 ${getEnrollmentRemainingHours(record)} \u8bfe\u65f6</strong>
+        <span>\u603b\u8bfe\u65f6 ${getEnrollmentTotalHours(record)}</span>
       </div>
     </article>
   `).join("");
@@ -121,30 +137,49 @@ function getSessionStudentNames(record) {
   return students
     .map((item) => enrollmentRecords.find((row) => Number(row.id) === Number(item.enrollmentId))?.studentName)
     .filter(Boolean)
-    .join("、");
+    .join("\u3001");
+}
+
+function renderSessionPagination(totalRecords) {
+  const totalPages = Math.max(1, Math.ceil(totalRecords / SESSION_PAGE_SIZE));
+  if (sessionRecordPage > totalPages) sessionRecordPage = totalPages;
+  if (sessionRecordPage < 1) sessionRecordPage = 1;
+
+  if (refs.sessionPageInfo) {
+    refs.sessionPageInfo.textContent = `\u7b2c ${sessionRecordPage} \u9875 / \u5171 ${totalPages} \u9875`;
+  }
+  if (refs.sessionPrevPageBtn) refs.sessionPrevPageBtn.disabled = sessionRecordPage <= 1;
+  if (refs.sessionNextPageBtn) refs.sessionNextPageBtn.disabled = sessionRecordPage >= totalPages;
 }
 
 function renderSessionRecords() {
-  const filtered = selectedSessionTeacherName
-    ? sessionRecords.filter((record) => record.teacherName === selectedSessionTeacherName)
-    : [];
+  const filtered = getFilteredSessionRecords();
+  refs.sessionRecordCount.textContent = `${filtered.length} \u6761\u8bb0\u5f55`;
 
-  refs.sessionRecordCount.textContent = `${filtered.length} 条记录`;
   if (filtered.length === 0) {
-    refs.sessionTableBody.innerHTML = `<tr><td colspan="6">当前教师还没有上课记录。</td></tr>`;
+    sessionRecordPage = 1;
+    refs.sessionTableBody.innerHTML = `<tr><td colspan="6">\u5f53\u524d\u6559\u5e08\u8fd8\u6ca1\u6709\u4e0a\u8bfe\u8bb0\u5f55\u3002</td></tr>`;
+    renderSessionPagination(0);
     return;
   }
 
-  refs.sessionTableBody.innerHTML = filtered.map((record) => `
+  const totalPages = Math.max(1, Math.ceil(filtered.length / SESSION_PAGE_SIZE));
+  if (sessionRecordPage > totalPages) sessionRecordPage = totalPages;
+  const start = (sessionRecordPage - 1) * SESSION_PAGE_SIZE;
+  const pagedRecords = filtered.slice(start, start + SESSION_PAGE_SIZE);
+
+  refs.sessionTableBody.innerHTML = pagedRecords.map((record) => `
     <tr>
       <td>${record.date}</td>
       <td>${record.teacherName}</td>
       <td>${record.className}</td>
       <td>${record.attendance}</td>
       <td>${getSessionStudentNames(record) || "-"}</td>
-      <td><button class="table-action-btn" type="button" data-delete-session-id="${record.id}">删除</button></td>
+      <td><button class="table-action-btn" type="button" data-delete-session-id="${record.id}">\u5220\u9664</button></td>
     </tr>
   `).join("");
+
+  renderSessionPagination(filtered.length);
 }
 
 function resetSessionSelection() {
@@ -153,7 +188,8 @@ function resetSessionSelection() {
 }
 
 function renderSessionWorkspace() {
-  refs.sessionTeacherDisplay.textContent = selectedSessionTeacherName || "未选择";
+  syncSessionStaticLabels();
+  refs.sessionTeacherDisplay.textContent = selectedSessionTeacherName || "\u672a\u9009\u62e9";
   renderSessionTeacherPicker();
   renderSessionClassTabs();
   renderSessionStudents();
@@ -164,8 +200,18 @@ function selectSessionTeacher(teacherName) {
   selectedSessionTeacherName = teacherName;
   selectedSessionClassName = "";
   selectedSessionStudentIds = [];
+  sessionRecordPage = 1;
   closeModal(refs.sessionTeacherModal);
   renderSessionWorkspace();
+}
+
+function changeSessionRecordPage(direction) {
+  const filtered = getFilteredSessionRecords();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / SESSION_PAGE_SIZE));
+  sessionRecordPage += direction;
+  if (sessionRecordPage < 1) sessionRecordPage = 1;
+  if (sessionRecordPage > totalPages) sessionRecordPage = totalPages;
+  renderSessionRecords();
 }
 
 function saveSessionRecord() {
@@ -174,7 +220,7 @@ function saveSessionRecord() {
   const validSelectedIds = selectedSessionStudentIds.filter((id) => candidateIds.includes(Number(id)));
 
   if (!selectedSessionTeacherName || !selectedSessionClassName || validSelectedIds.length === 0) {
-    showToast("请先选择教师、班级并勾选学员。");
+    showToast("\u8bf7\u5148\u9009\u62e9\u6559\u5e08\u3001\u73ed\u7ea7\u5e76\u52fe\u9009\u5b66\u5458\u3002");
     return;
   }
 
@@ -190,11 +236,12 @@ function saveSessionRecord() {
 
   sessionRecords.unshift(session);
   selectedSessionStudentIds = [];
+  sessionRecordPage = 1;
   renderSessionWorkspace();
   renderTeachers();
   renderStudents(refs.studentSearch.value || "");
   renderRenewalList();
-  showToast("上课记录已保存。");
+  showToast("\u4e0a\u8bfe\u8bb0\u5f55\u5df2\u4fdd\u5b58\u3002");
 }
 
 function deleteSessionRecord(sessionId) {
@@ -203,5 +250,5 @@ function deleteSessionRecord(sessionId) {
   renderTeachers();
   renderStudents(refs.studentSearch.value || "");
   renderRenewalList();
-  showToast("上课记录已删除，对应课时已自动恢复。");
+  showToast("\u4e0a\u8bfe\u8bb0\u5f55\u5df2\u5220\u9664\uff0c\u5bf9\u5e94\u8bfe\u65f6\u5df2\u81ea\u52a8\u6062\u590d\u3002");
 }
