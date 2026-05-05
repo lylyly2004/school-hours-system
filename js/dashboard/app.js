@@ -226,6 +226,28 @@
   });
 
   refs.teacherCardList.addEventListener("click", (event) => {
+    const detailBtn = event.target.closest("[data-detail-teacher-id]");
+    if (detailBtn) {
+      const targetId = detailBtn.dataset.detailTeacherId;
+      refs.teacherCardList.querySelectorAll(".teacher-detail-row").forEach((row) => {
+        if (row.id !== `teacher-detail-row-${targetId}`) {
+          row.classList.add("hidden");
+        }
+      });
+      document.getElementById(`teacher-detail-row-${targetId}`)?.classList.toggle("hidden");
+      return;
+    }
+    const teacherPageBtn = event.target.closest("[data-teacher-history-page]");
+    if (teacherPageBtn) {
+      const teacherId = Number(teacherPageBtn.dataset.teacherHistoryPage);
+      const direction = teacherPageBtn.dataset.pageDirection;
+      const currentPage = getTeacherDetailPage(teacherId);
+      setTeacherDetailPage(teacherId, direction === "prev" ? currentPage - 1 : currentPage + 1);
+      renderTeachers();
+      refs.teacherCardList.querySelectorAll(".teacher-detail-row").forEach((row) => row.classList.add("hidden"));
+      document.getElementById(`teacher-detail-row-${teacherId}`)?.classList.remove("hidden");
+      return;
+    }
     const editBtn = event.target.closest("[data-edit-teacher-id]");
     if (editBtn) {
       openTeacherModal(Number(editBtn.dataset.editTeacherId));
@@ -238,7 +260,10 @@
       teachers = teachers.filter((item) => item.id !== teacherId);
       populateTeacherOptions(teachers[0]?.name || "");
       renderTeachers();
+      renderClasses();
+      renderStudents(refs.studentSearch?.value || "");
       renderSessionTeacherPicker();
+      renderSessionWorkspace();
       showToast("教师已删除。")
     }
   });
