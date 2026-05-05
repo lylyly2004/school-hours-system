@@ -69,6 +69,9 @@
             <input type="search" id="studentSearch" placeholder="搜索学员姓名" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
             <span>搜索</span>
           </label>
+          <button class="secondary-btn" type="button" id="exportDataBtn">导出数据</button>
+          <button class="secondary-btn" type="button" id="importDataBtn">导入数据</button>
+          <input class="hidden" type="file" id="importDataInput" accept=".json,application/json">
           <button class="ghost-btn" type="button" id="logoutBtn">退出登录</button>
         </div>
       </header>
@@ -178,19 +181,19 @@
                     <input type="text" id="studentNameInput" autocomplete="off">
                   </div>
                   <div class="form-field">
-                    <label>家长姓名 <span class="required-mark">*</span></label>
+                    <label>家长姓名</label>
                     <input type="text" id="parentNameInput" autocomplete="off">
                   </div>
                   <div class="form-field">
-                    <label>联系电话 <span class="required-mark">*</span></label>
+                    <label>联系电话</label>
                     <input type="text" id="parentPhoneInput" autocomplete="off">
                   </div>
                   <div class="form-field">
-                    <label>学员年龄 <span class="required-mark">*</span></label>
+                    <label>学员年龄</label>
                     <input type="number" id="studentAgeInput" min="1">
                   </div>
                   <div class="form-field">
-                    <label>出生日期 <span class="required-mark">*</span></label>
+                    <label>出生日期</label>
                     <input type="date" id="birthMonthInput">
                   </div>
                   <div class="form-field">

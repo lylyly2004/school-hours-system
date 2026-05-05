@@ -3,6 +3,7 @@ function showToast(message) {
   refs.toast.textContent = message;
   refs.toast.classList.remove("hidden");
   window.clearTimeout(showToast.timer);
+  persistAppData();
   showToast.timer = window.setTimeout(() => {
     refs.toast.classList.add("hidden");
   }, 2200);
@@ -10,6 +11,111 @@ function showToast(message) {
 
 function uid() {
   return Date.now() + Math.floor(Math.random() * 1000);
+}
+
+const LOCAL_DATA_STORAGE_KEY = "school-hours-system-data-v1";
+
+function getPersistedStatePayload() {
+  return {
+    campusOptions: campusOptions.filter(Boolean),
+    retailCategoryOptions: retailCategoryOptions.filter(Boolean),
+    chargePackages,
+    courses,
+    classTypeOptions,
+    teachers,
+    classes,
+    enrollmentRecords,
+    retailRecords,
+    birthdayNotes,
+    todayRecords,
+    sessionRecords,
+    transactions
+  };
+}
+
+function persistAppData() {
+  try {
+    window.localStorage.setItem(
+      LOCAL_DATA_STORAGE_KEY,
+      JSON.stringify(getPersistedStatePayload())
+    );
+  } catch (error) {
+    console.warn("Failed to persist local app data:", error);
+  }
+}
+
+function loadPersistedData() {
+  try {
+    const raw = window.localStorage.getItem(LOCAL_DATA_STORAGE_KEY);
+    if (!raw) return;
+    applyPersistedData(JSON.parse(raw));
+  } catch (error) {
+    console.warn("Failed to load local app data:", error);
+  }
+}
+
+function applyPersistedData(saved) {
+  if (!saved || typeof saved !== "object") return;
+
+  if (Array.isArray(saved.campusOptions) && saved.campusOptions.length > 0) {
+    campusOptions.splice(0, campusOptions.length, ...saved.campusOptions);
+  }
+  if (Array.isArray(saved.retailCategoryOptions) && saved.retailCategoryOptions.length > 0) {
+    retailCategoryOptions.splice(0, retailCategoryOptions.length, ...saved.retailCategoryOptions);
+  }
+  if (Array.isArray(saved.chargePackages)) chargePackages = saved.chargePackages;
+  if (Array.isArray(saved.courses)) courses = saved.courses;
+  if (Array.isArray(saved.classTypeOptions)) classTypeOptions = saved.classTypeOptions;
+  if (Array.isArray(saved.teachers)) teachers = saved.teachers;
+  if (Array.isArray(saved.classes)) classes = saved.classes;
+  if (Array.isArray(saved.enrollmentRecords)) enrollmentRecords = saved.enrollmentRecords;
+  if (Array.isArray(saved.retailRecords)) retailRecords = saved.retailRecords;
+  if (saved.birthdayNotes && typeof saved.birthdayNotes === "object") birthdayNotes = saved.birthdayNotes;
+  if (Array.isArray(saved.todayRecords)) todayRecords = saved.todayRecords;
+  if (Array.isArray(saved.sessionRecords)) sessionRecords = saved.sessionRecords;
+  if (Array.isArray(saved.transactions)) transactions = saved.transactions;
+}
+
+function exportAppData() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    version: 1,
+    data: getPersistedStatePayload()
+  };
+  const fileName = `school-hours-data-${getTodayString()}.json`;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+  const objectUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(objectUrl);
+  showToast("数据已导出。");
+}
+
+function importAppDataFromFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(String(reader.result || ""));
+      const payload = parsed && typeof parsed === "object" && parsed.data ? parsed.data : parsed;
+      if (!payload || typeof payload !== "object") {
+        throw new Error("Invalid data payload");
+      }
+      applyPersistedData(payload);
+      normalizeSharedData();
+      persistAppData();
+      window.alert("数据已导入，页面将刷新以加载最新内容。");
+      window.location.reload();
+    } catch (error) {
+      console.warn("Failed to import local app data:", error);
+      window.alert("导入失败，请确认选择的是系统导出的 JSON 数据文件。");
+    }
+  };
+  reader.readAsText(file, "utf-8");
 }
 
 function getTodayString() {

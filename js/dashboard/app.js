@@ -30,6 +30,20 @@
   refs.modalMask.addEventListener("click", () => closeModal(refs.renewalModal));
 
   refs.openSessionManageBtn.addEventListener("click", () => switchPage("session"));
+  refs.exportDataBtn.addEventListener("click", exportAppData);
+  refs.importDataBtn.addEventListener("click", () => {
+    refs.importDataInput.value = "";
+    refs.importDataInput.click();
+  });
+  refs.importDataInput.addEventListener("change", () => {
+    const file = refs.importDataInput.files?.[0];
+    if (!file) return;
+    if (!window.confirm("导入数据会覆盖当前本机保存的数据，是否继续？")) {
+      refs.importDataInput.value = "";
+      return;
+    }
+    importAppDataFromFile(file);
+  });
   refs.logoutBtn.addEventListener("click", () => {
     sessionStorage.removeItem("school-admin-auth");
     window.location.href = "./login.html";
@@ -395,6 +409,7 @@
 }
 
 function init() {
+  loadPersistedData();
   normalizeSharedData();
   populateRetailBaseOptions();
   populateCampusOptions(campusOptions.find((item) => item !== "鍏ㄩ儴鏍″尯") || "");
@@ -425,6 +440,7 @@ function init() {
   refs.todayCourseFilter.value = "鍏ㄩ儴璇剧▼";
   updateHeader();
   bindEvents();
+  window.addEventListener("beforeunload", persistAppData);
 }
 
 init();

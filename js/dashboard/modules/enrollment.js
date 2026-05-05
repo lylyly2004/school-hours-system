@@ -37,6 +37,42 @@ function refreshEnrollmentLinkedViews() {
   renderClasses(refs.classSearch?.value || "");
   renderSessionWorkspace();
   renderTodayRecords();
+  renderTransactions();
+}
+
+function syncEnrollmentTransaction(record) {
+  if (!record) return;
+
+  const transactionPayload = {
+    date: record.enrollmentPaidDate || record.enrollDate || getTodayString(),
+    studentName: record.studentName || "",
+    type: "\u62A5\u540D",
+    amount: Number(record.enrollmentPaidAmount || getPackagePrice(record.enrollmentPackageName || record.packageName || "")),
+    note: `${record.enrollmentPackageName || record.packageName || ""} \u62A5\u540D\u9996\u671F\u8D39\u7528`,
+    campus: record.campus || "\u603B\u90E8\u6821\u533A",
+    course: record.courseName || "",
+    category: "\u5B66\u8D39",
+    itemName: "",
+    sourceType: "enrollment",
+    sourceId: record.id
+  };
+
+  const matchedIndex = transactions.findIndex(
+    (item) => item.sourceType === "enrollment" && Number(item.sourceId) === Number(record.id)
+  );
+
+  if (matchedIndex >= 0) {
+    transactions[matchedIndex] = {
+      ...transactions[matchedIndex],
+      ...transactionPayload
+    };
+    return;
+  }
+
+  transactions.unshift({
+    id: uid(),
+    ...transactionPayload
+  });
 }
 
 function resetEnrollmentForm() {
@@ -164,7 +200,7 @@ function saveEnrollment() {
     remark: refs.remarkInput.value.trim()
   };
 
-  if (!payload.enrollDate || !payload.studentName || !payload.parentName || !payload.parentPhone || !payload.studentAge || !payload.birthMonth || !payload.campus || !payload.courseName || !payload.className || !payload.teacherName || !payload.packageName) {
+  if (!payload.enrollDate || !payload.studentName || !payload.campus || !payload.courseName || !payload.className || !payload.teacherName || !payload.packageName) {
     showToast("\u8bf7\u5148\u5b8c\u6574\u586b\u5199\u65b0\u751f\u62a5\u540d\u7684\u5fc5\u586b\u4fe1\u606f");
     return;
   }
@@ -204,16 +240,20 @@ function saveEnrollment() {
         }
         : record
     ));
+    const updatedRecord = enrollmentRecords.find((record) => Number(record.id) === Number(editingEnrollmentId));
+    syncEnrollmentTransaction(updatedRecord);
   } else {
-    enrollmentRecords.unshift({
+    const newRecord = {
       id: uid(),
       studentStatus: "active",
       changeLogs: [],
       lifecycleLogs: [],
       renewalLogs: [],
       ...payload
-    });
-    syncEnrollmentToToday(payload, "\u65b0\u751f\u62a5\u540d");
+    };
+    enrollmentRecords.unshift(newRecord);
+    syncEnrollmentToToday(newRecord, "\u65b0\u751F\u62A5\u540D");
+    syncEnrollmentTransaction(newRecord);
   }
 
   resetEnrollmentForm();
