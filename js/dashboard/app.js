@@ -1,4 +1,4 @@
-﻿function bindEvents() {
+function bindEvents() {
   refs.menuParents.forEach((button) => {
     button.addEventListener("click", () => {
       const group = button.dataset.parent;
