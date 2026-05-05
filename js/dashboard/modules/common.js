@@ -21,6 +21,11 @@ function applyTeachingTerminology() {
   if (enrollmentCourseLabel) {
     enrollmentCourseLabel.innerHTML = `\u62A5\u540D\u5B66\u79D1\u7C7B\u522B <span class="required-mark">*</span>`;
   }
+  const enrollmentCampusField = refs.campusSelect?.closest(".form-field");
+  const enrollmentCampusLabel = enrollmentCampusField?.querySelector("label");
+  if (enrollmentCampusLabel) {
+    enrollmentCampusLabel.innerHTML = `\u6821\u533A <span class="required-mark">*</span>`;
+  }
 
   const coursePanel = document.getElementById("panel-course");
   if (coursePanel) {
@@ -94,6 +99,14 @@ function populateTeacherOptions(selectedTeacher = "") {
     : `<option value="">请先添加教师</option>`;
   refs.teacherSelect.innerHTML = options;
   refs.adjustTeacherSelect.innerHTML = options;
+}
+
+function populateCampusOptions(selectedCampus = "") {
+  if (!refs.campusSelect) return;
+  refs.campusSelect.innerHTML = campusOptions
+    .filter((item) => item !== "鍏ㄩ儴鏍″尯")
+    .map((item) => `<option value="${item}" ${item === selectedCampus ? "selected" : ""}>${item}</option>`)
+    .join("");
 }
 
 function populateCourseOptions(selectedCourse = "") {

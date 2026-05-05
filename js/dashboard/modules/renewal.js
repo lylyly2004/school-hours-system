@@ -205,6 +205,7 @@ function saveRenewal() {
     amount: receivedAmount,
     note: `${packageName} 续费，赠送 ${giftHours} 课时`,
     campus: "总部校区",
+    campus: target.campus || "\u603B\u90E8\u6821\u533A",
     course: target.courseName,
     category: "学费",
     itemName: "",

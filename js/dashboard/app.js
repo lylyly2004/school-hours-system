@@ -41,6 +41,12 @@
   refs.teacherModalMask.addEventListener("click", () => closeModal(refs.teacherModal));
   refs.saveTeacherBtn.addEventListener("click", saveTeacher);
 
+  refs.addChargePackageBtn.addEventListener("click", () => openChargePackageModal());
+  refs.closeChargePackageModalBtn.addEventListener("click", closeChargePackageModal);
+  refs.cancelChargePackageBtn.addEventListener("click", closeChargePackageModal);
+  refs.chargePackageModalMask.addEventListener("click", closeChargePackageModal);
+  refs.saveChargePackageBtn.addEventListener("click", saveChargePackage);
+
   refs.courseQuickAddBtn.addEventListener("click", () => openManagementEditor("course-create"));
   refs.addClassTypeBtn.addEventListener("click", () => openManagementEditor("class-type-create"));
   refs.addClassBtn.addEventListener("click", addClass);
@@ -75,16 +81,40 @@
     renderTodayRecords();
   });
 
-  refs.filterTransactionBtn.addEventListener("click", renderTransactions);
+  refs.filterTransactionBtn.addEventListener("click", () => {
+    setTransactionPage(1);
+    renderTransactions();
+  });
   refs.resetTransactionBtn.addEventListener("click", () => {
     refs.transactionDateFrom.value = "";
     refs.transactionDateTo.value = "";
     refs.transactionCampusFilter.value = "鍏ㄩ儴鏍″尯";
     refs.transactionCourseFilter.value = "鍏ㄩ儴璇剧▼";
     refs.transactionCategoryFilter.value = "鍏ㄩ儴鍒嗙被";
+    refs.transactionTypeFilter.value = "\u5168\u90E8\u7C7B\u578B";
     refs.transactionStudentKeyword.value = "";
     refs.transactionItemKeyword.value = "";
+    setTransactionPage(1);
     renderTransactions();
+  });
+  refs.transactionPrevPageBtn.addEventListener("click", () => {
+    setTransactionPage(currentTransactionPage - 1);
+    renderTransactions();
+  });
+  refs.transactionNextPageBtn.addEventListener("click", () => {
+    setTransactionPage(currentTransactionPage + 1);
+    renderTransactions();
+  });
+  refs.transactionTableBody.addEventListener("click", (event) => {
+    const detailBtn = event.target.closest("[data-detail-transaction-id]");
+    if (!detailBtn) return;
+    const targetId = detailBtn.dataset.detailTransactionId;
+    refs.transactionTableBody.querySelectorAll(".detail-row").forEach((row) => {
+      if (row.id !== `transaction-detail-row-${targetId}`) {
+        row.classList.add("hidden");
+      }
+    });
+    document.getElementById(`transaction-detail-row-${targetId}`)?.classList.toggle("hidden");
   });
 
   refs.renewalDiscountMode.addEventListener("change", () => {
@@ -268,6 +298,21 @@
     }
   });
 
+  refs.chargePackageList.addEventListener("click", (event) => {
+    const editBtn = event.target.closest("[data-edit-charge-package-id]");
+    if (editBtn) {
+      openChargePackageModal(Number(editBtn.dataset.editChargePackageId));
+      return;
+    }
+    const deleteBtn = event.target.closest("[data-delete-charge-package-id]");
+    if (!deleteBtn) return;
+    if (deleteBtn.dataset.deleteChargeAllowed !== "true") {
+      showToast(deleteBtn.dataset.deleteChargeReason || "当前收费模式不满足删除条件");
+      return;
+    }
+    deleteChargePackage(Number(deleteBtn.dataset.deleteChargePackageId));
+  });
+
   refs.courseTableBody.addEventListener("click", (event) => {
     const editBtn = event.target.closest("[data-edit-course-id]");
     if (editBtn) {
@@ -352,6 +397,7 @@
 function init() {
   normalizeSharedData();
   populateRetailBaseOptions();
+  populateCampusOptions(campusOptions.find((item) => item !== "鍏ㄩ儴鏍″尯") || "");
   populateTeacherOptions(teachers[0]?.name || "");
   populateCourseOptions(courses[0]?.name || "");
   populateClassTypeOptions(classTypeOptions[0] || "");

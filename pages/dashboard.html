@@ -194,6 +194,10 @@
                     <input type="date" id="birthMonthInput">
                   </div>
                   <div class="form-field">
+                    <label>鏍″尯 <span class="required-mark">*</span></label>
+                    <select id="campusSelect"></select>
+                  </div>
+                  <div class="form-field">
                     <label>报名课程类型 <span class="required-mark">*</span></label>
                     <select id="courseSelect"></select>
                   </div>
@@ -568,6 +572,9 @@
                 <p class="card-tag">收费模式</p>
                 <h3>课时包设置</h3>
               </div>
+              <div class="inline-actions">
+                <button class="primary-btn" type="button" id="addChargePackageBtn">新增收费模式</button>
+              </div>
             </div>
             <div class="pricing-grid" id="chargePackageList"></div>
           </article>
@@ -602,6 +609,10 @@
               <div class="form-field">
                 <label>商品分类</label>
                 <select id="transactionCategoryFilter"></select>
+              </div>
+              <div class="form-field">
+                <label>鍔炵悊绫诲瀷</label>
+                <select id="transactionTypeFilter"></select>
               </div>
               <div class="form-field">
                 <label>搜索姓名</label>
@@ -655,6 +666,11 @@
                 </thead>
                 <tbody id="transactionTableBody"></tbody>
               </table>
+            </div>
+            <div class="table-pagination">
+              <button class="secondary-btn" type="button" id="transactionPrevPageBtn">上一页</button>
+              <span class="pagination-info" id="transactionPageInfo">第 1 / 1 页</span>
+              <button class="secondary-btn" type="button" id="transactionNextPageBtn">下一页</button>
             </div>
           </article>
         </section>
@@ -836,6 +852,36 @@
       <div class="enrollment-actions">
         <button class="primary-btn" type="button" id="saveRetailBtn">保存记录</button>
         <button class="secondary-btn" type="button" id="cancelRetailBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="chargePackageModal">
+    <div class="modal-mask" id="chargePackageModalMask"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="chargePackageFormTitle">新增收费模式</h3>
+        </div>
+        <button class="close-btn" type="button" id="closeChargePackageModalBtn">关闭</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>课包名称</label>
+          <input type="text" id="chargePackageNameInput" autocomplete="off">
+        </div>
+        <div class="form-field">
+          <label>课时数量</label>
+          <input type="number" id="chargePackageHoursInput" min="1" value="24">
+        </div>
+        <div class="form-field">
+          <label>收费金额</label>
+          <input type="number" id="chargePackagePriceInput" min="0" value="0">
+        </div>
+      </div>
+      <div class="enrollment-actions">
+        <button class="primary-btn" type="button" id="saveChargePackageBtn">保存收费模式</button>
+        <button class="secondary-btn" type="button" id="cancelChargePackageBtn">取消</button>
       </div>
     </div>
   </div>

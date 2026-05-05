@@ -1016,6 +1016,14 @@ input {
   border: 1px solid #f0e2d3;
 }
 
+.pricing-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
 .mini-stat strong,
 .pricing-card strong {
   display: block;
@@ -1166,6 +1174,34 @@ th {
 .status-normal {
   background: rgba(45, 138, 95, 0.12);
   color: var(--success);
+}
+
+.transaction-type-retail {
+  background: rgba(58, 107, 170, 0.12);
+  color: #2f5f9f;
+}
+
+.transaction-type-renewal {
+  background: rgba(201, 126, 37, 0.14);
+  color: #9a5c14;
+}
+
+.transaction-type-default {
+  background: rgba(99, 85, 69, 0.12);
+  color: #6c5b49;
+}
+
+.transaction-amount-income,
+.transaction-amount-expense {
+  font-weight: 700;
+}
+
+.transaction-amount-income {
+  color: var(--success);
+}
+
+.transaction-amount-expense {
+  color: #b84a3a;
 }
 
 .detail-row td {

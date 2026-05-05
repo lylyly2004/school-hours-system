@@ -50,6 +50,7 @@ function resetEnrollmentForm() {
   refs.parentPhoneInput.value = "";
   refs.studentAgeInput.value = "";
   refs.birthMonthInput.value = "";
+  populateCampusOptions(campusOptions.find((item) => item !== "鍏ㄩ儴鏍″尯") || "");
   populateCourseOptions(courses.find((item) => isCourseEnabled(item))?.name || "");
   populateClassOptions(classes.find((item) => isClassEnabled(item))?.name || "");
   populateTeacherOptions(teachers[0]?.name || "");
@@ -122,6 +123,7 @@ function loadEnrollmentForEdit(recordId) {
   refs.parentPhoneInput.value = record.parentPhone || "";
   refs.studentAgeInput.value = record.studentAge || "";
   refs.birthMonthInput.value = record.birthMonth || "";
+  populateCampusOptions(record.campus || campusOptions.find((item) => item !== "鍏ㄩ儴鏍″尯") || "");
   populateCourseOptions(record.courseName || "");
   populateClassOptions(record.className || "");
   populateTeacherOptions(record.teacherName || "");
@@ -148,6 +150,7 @@ function saveEnrollment() {
     parentPhone: refs.parentPhoneInput.value.trim(),
     studentAge: refs.studentAgeInput.value.trim(),
     birthMonth: refs.birthMonthInput.value,
+    campus: refs.campusSelect.value,
     courseName: refs.courseSelect.value,
     className: refs.classSelect.value,
     teacherName: refs.teacherSelect.value,
@@ -161,12 +164,13 @@ function saveEnrollment() {
     remark: refs.remarkInput.value.trim()
   };
 
-  if (!payload.enrollDate || !payload.studentName || !payload.parentName || !payload.parentPhone || !payload.studentAge || !payload.birthMonth || !payload.courseName || !payload.className || !payload.teacherName || !payload.packageName) {
+  if (!payload.enrollDate || !payload.studentName || !payload.parentName || !payload.parentPhone || !payload.studentAge || !payload.birthMonth || !payload.campus || !payload.courseName || !payload.className || !payload.teacherName || !payload.packageName) {
     showToast("\u8bf7\u5148\u5b8c\u6574\u586b\u5199\u65b0\u751f\u62a5\u540d\u7684\u5fc5\u586b\u4fe1\u606f");
     return;
   }
 
   if (isLocked && originalRecord) {
+    payload.campus = originalRecord.campus || payload.campus;
     payload.courseName = originalRecord.courseName;
     payload.className = originalRecord.className;
     payload.teacherName = originalRecord.teacherName;

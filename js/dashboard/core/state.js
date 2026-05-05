@@ -198,6 +198,7 @@ let editingEnrollmentId = null;
 let editingTeacherId = null;
 let editingRetailId = null;
 let editingCourseId = null;
+let editingChargePackageId = null;
 let managementEditorMode = "";
 let adjustingStudentId = null;
 let studentAdjustMode = "class";
@@ -255,6 +256,7 @@ const refs = {
   parentPhoneInput: document.getElementById("parentPhoneInput"),
   studentAgeInput: document.getElementById("studentAgeInput"),
   birthMonthInput: document.getElementById("birthMonthInput"),
+  campusSelect: document.getElementById("campusSelect"),
   courseSelect: document.getElementById("courseSelect"),
   classSelect: document.getElementById("classSelect"),
   teacherSelect: document.getElementById("teacherSelect"),
@@ -326,12 +328,23 @@ const refs = {
   sessionTeacherMask: document.getElementById("sessionTeacherMask"),
   closeSessionTeacherModalBtn: document.getElementById("closeSessionTeacherModalBtn"),
   sessionTeacherList: document.getElementById("sessionTeacherList"),
+  addChargePackageBtn: document.getElementById("addChargePackageBtn"),
   chargePackageList: document.getElementById("chargePackageList"),
+  chargePackageModal: document.getElementById("chargePackageModal"),
+  chargePackageModalMask: document.getElementById("chargePackageModalMask"),
+  closeChargePackageModalBtn: document.getElementById("closeChargePackageModalBtn"),
+  chargePackageFormTitle: document.getElementById("chargePackageFormTitle"),
+  chargePackageNameInput: document.getElementById("chargePackageNameInput"),
+  chargePackageHoursInput: document.getElementById("chargePackageHoursInput"),
+  chargePackagePriceInput: document.getElementById("chargePackagePriceInput"),
+  saveChargePackageBtn: document.getElementById("saveChargePackageBtn"),
+  cancelChargePackageBtn: document.getElementById("cancelChargePackageBtn"),
   transactionDateFrom: document.getElementById("transactionDateFrom"),
   transactionDateTo: document.getElementById("transactionDateTo"),
   transactionCampusFilter: document.getElementById("transactionCampusFilter"),
   transactionCourseFilter: document.getElementById("transactionCourseFilter"),
   transactionCategoryFilter: document.getElementById("transactionCategoryFilter"),
+  transactionTypeFilter: document.getElementById("transactionTypeFilter"),
   transactionStudentKeyword: document.getElementById("transactionStudentKeyword"),
   transactionItemKeyword: document.getElementById("transactionItemKeyword"),
   filterTransactionBtn: document.getElementById("filterTransactionBtn"),
@@ -341,6 +354,9 @@ const refs = {
   transactionRetailAmount: document.getElementById("transactionRetailAmount"),
   transactionOtherAmount: document.getElementById("transactionOtherAmount"),
   transactionTableBody: document.getElementById("transactionTableBody"),
+  transactionPrevPageBtn: document.getElementById("transactionPrevPageBtn"),
+  transactionPageInfo: document.getElementById("transactionPageInfo"),
+  transactionNextPageBtn: document.getElementById("transactionNextPageBtn"),
   retailModal: document.getElementById("retailModal"),
   retailModalMask: document.getElementById("retailModalMask"),
   retailFormTitle: document.getElementById("retailFormTitle"),
