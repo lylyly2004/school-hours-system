@@ -90,7 +90,7 @@ function getCurrentClassTeacher(className) {
       .map((record) => record.teacherName)
       .filter(Boolean)
   ));
-  return matchedTeachers.length > 0 ? matchedTeachers.join(" / ") : "待分配";
+  return matchedTeachers.length > 0 ? matchedTeachers.join(" / ") : "\u5F85\u5206\u914D";
 }
 
 function getCurrentClassStudentCount(className) {
@@ -99,160 +99,93 @@ function getCurrentClassStudentCount(className) {
 
 function normalizeSharedData() {
   Object.assign(pageMeta, {
-    enrollment: { tag: "前台业务", title: "新生报名管理" },
-    teacher: { tag: "教学管理", title: "教师管理" },
-    course: { tag: "教学管理", title: "课程管理" },
-    class: { tag: "教学管理", title: "班级管理" },
-    student: { tag: "教学管理", title: "学员管理" },
-    session: { tag: "教学管理", title: "上课管理" },
-    charge: { tag: "教学管理", title: "收费模式" },
-    transaction: { tag: "财务管理", title: "流水管理" }
+    enrollment: { tag: "\u524D\u53F0\u4E1A\u52A1", title: "\u65B0\u751F\u62A5\u540D\u7BA1\u7406" },
+    teacher: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u6559\u5E08\u7BA1\u7406" },
+    course: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u5B66\u79D1\u7BA1\u7406" },
+    class: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u73ED\u7EA7\u7BA1\u7406" },
+    student: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u5B66\u5458\u7BA1\u7406" },
+    session: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u4E0A\u8BFE\u7BA1\u7406" },
+    charge: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u6536\u8D39\u6A21\u5F0F" },
+    transaction: { tag: "\u8D22\u52A1\u7BA1\u7406", title: "\u6D41\u6C34\u7BA1\u7406" }
   });
 
-  campusOptions.splice(0, campusOptions.length, "全部校区", "总部校区", "东城校区", "西城校区");
-  retailCategoryOptions.splice(0, retailCategoryOptions.length, "教材", "配件", "乐器", "学习用品");
-  classTypeOptions = ["成人班", "少儿班", "1对1"];
+  campusOptions.splice(0, campusOptions.length, "\u5168\u90E8\u6821\u533A", "\u603B\u90E8\u6821\u533A");
+  retailCategoryOptions.splice(0, retailCategoryOptions.length, "\u6559\u6750", "\u914D\u4EF6", "\u4E50\u5668", "\u5B66\u4E60\u7528\u54C1");
 
-  chargePackages = [
-    { id: 1, name: "课时包 24 节", hours: 24, price: 2880 },
-    { id: 2, name: "课时包 48 节", hours: 48, price: 5280 },
-    { id: 3, name: "季度班", hours: 36, price: 3600 }
-  ];
+  const normalizedClassTypes = Array.isArray(classTypeOptions)
+    ? classTypeOptions.filter(Boolean)
+    : [];
+  classTypeOptions = Array.from(new Set(normalizedClassTypes));
+  if (classTypeOptions.length === 0) {
+    classTypeOptions = ["1\u5BF91", "1\u5BF92", "\u5C0F\u7EC4\u8BFE", "\u73ED\u5236\u8BFE"];
+  }
 
-  courses = [
-    { id: 1, name: "古筝", status: "active" },
-    { id: 2, name: "琵琶", status: "active" },
-    { id: 3, name: "素描", status: "active" },
-    { id: 4, name: "声乐", status: "active" },
-    ...courses
-      .filter((item) => ![1, 2, 3, 4].includes(Number(item.id)))
-      .map((item) => ({ ...item, status: item.status || "active" }))
-  ];
+  chargePackages = Array.isArray(chargePackages)
+    ? chargePackages.map((item) => ({
+      ...item,
+      hours: Number(item.hours || 0),
+      price: Number(item.price || 0)
+    }))
+    : [];
 
-  teachers = [
-    { id: 1, name: "刘老师", nickname: "刘老师", subject: "古筝", phone: "13800010001" },
-    { id: 2, name: "王老师", nickname: "王老师", subject: "琵琶", phone: "13800010002" },
-    { id: 3, name: "陈老师", nickname: "陈老师", subject: "素描", phone: "13800010003" },
-    ...teachers.filter((item) => ![1, 2, 3].includes(Number(item.id)))
-  ];
+  courses = Array.isArray(courses)
+    ? courses.map((item) => ({
+      ...item,
+      status: item.status || "active"
+    }))
+    : [];
 
-  classes = [
-    { id: 1, name: "古筝成人班", type: "成人班", status: "active" },
-    { id: 2, name: "琵琶少儿班", type: "少儿班", status: "active" },
-    { id: 3, name: "素描 1对1", type: "1对1", status: "active" },
-    ...classes
-      .filter((item) => ![1, 2, 3].includes(Number(item.id)))
-      .map((item) => ({ ...item, status: item.status || "active" }))
-  ];
+  teachers = Array.isArray(teachers)
+    ? teachers.map((item) => ({
+      ...item,
+      nickname: item.nickname || item.name || "",
+      subject: item.subject || "",
+      phone: item.phone || ""
+    }))
+    : [];
 
-  enrollmentRecords = enrollmentRecords.map((record) => {
-    if (Number(record.id) === 101) {
-      return {
-        ...record,
-        studentName: "许安然",
-        parentName: "许妈妈",
-        courseName: "古筝",
-        className: "古筝成人班",
-        teacherName: "刘老师",
-        packageName: "课时包 24 节",
-        packageNote: "开班活动赠送 2 课时",
-        remark: "家长比较关注上课时间安排"
-      };
-    }
-    if (Number(record.id) === 102) {
-      return {
-        ...record,
-        studentName: "沈佳怡",
-        parentName: "沈爸爸",
-        courseName: "琵琶",
-        className: "琵琶少儿班",
-        teacherName: "王老师",
-        packageName: "季度班"
-      };
-    }
-    if (Number(record.id) === 103) {
-      return {
-        ...record,
-        studentName: "李思彤",
-        parentName: "李妈妈",
-        courseName: "素描",
-        className: "素描 1对1",
-        teacherName: "陈老师",
-        packageName: "课时包 24 节",
-        remark: "需要续费跟进"
-      };
-    }
-    return record;
-  });
+  classes = Array.isArray(classes)
+    ? classes.map((item) => ({
+      ...item,
+      status: item.status || "active"
+    }))
+    : [];
 
-  retailRecords = retailRecords.map((record) => {
-    if (Number(record.id) === 201) {
-      return {
-        ...record,
-        itemName: "古筝教材基础册",
-        category: "教材",
-        campus: "总部校区",
-        course: "古筝",
-        buyer: "许妈妈",
-        paymentMethod: "微信",
-        operator: "前台A",
-        remark: "配套报名教材"
-      };
-    }
-    if (Number(record.id) === 202) {
-      return {
-        ...record,
-        itemName: "琵琶指甲套装",
-        category: "配件",
-        campus: "东城校区",
-        course: "琵琶",
-        buyer: "沈爸爸",
-        paymentMethod: "支付宝",
-        operator: "前台B",
-        remark: "课堂用品"
-      };
-    }
-    return record;
-  });
+  enrollmentRecords = Array.isArray(enrollmentRecords)
+    ? enrollmentRecords.map((record) => ({
+      ...record,
+      campus: record.campus || "\u603B\u90E8\u6821\u533A",
+      studentStatus: record.studentStatus || "active",
+      changeLogs: Array.isArray(record.changeLogs) ? record.changeLogs : [],
+      lifecycleLogs: Array.isArray(record.lifecycleLogs) ? record.lifecycleLogs : [],
+      renewalLogs: Array.isArray(record.renewalLogs) ? record.renewalLogs : []
+    }))
+    : [];
 
-  birthdayNotes = {
-    许安然: "准备生日卡片",
-    沈佳怡: "课堂祝福",
-    ...birthdayNotes
-  };
+  retailRecords = Array.isArray(retailRecords)
+    ? retailRecords.map((record) => ({
+      ...record,
+      campus: record.campus || "\u603B\u90E8\u6821\u533A",
+      quantity: Number(record.quantity || 0),
+      unitPrice: Number(record.unitPrice || 0),
+      amount: Number(record.amount || 0)
+    }))
+    : [];
 
-  todayRecords = todayRecords.map((record) => {
-    if (Number(record.id) === 301) return { ...record, item: "新生报名", target: "许安然", course: "古筝", status: "已完成" };
-    if (Number(record.id) === 302) return { ...record, item: "教材购买", target: "李思彤", course: "素描", status: "已完成" };
-    if (Number(record.id) === 303) return { ...record, item: "转班申请", target: "沈佳怡", course: "琵琶", status: "待确认" };
-    return record;
-  });
+  birthdayNotes = birthdayNotes && typeof birthdayNotes === "object" ? birthdayNotes : {};
 
-  sessionRecords = sessionRecords.map((record) => {
-    if (Number(record.id) === 401) return { ...record, teacherName: "刘老师", className: "古筝成人班" };
-    if (Number(record.id) === 402) return { ...record, teacherName: "王老师", className: "琵琶少儿班" };
-    if (Number(record.id) === 403) return { ...record, teacherName: "陈老师", className: "素描 1对1" };
-    return record;
-  });
+  todayRecords = Array.isArray(todayRecords) ? todayRecords : [];
+  sessionRecords = Array.isArray(sessionRecords) ? sessionRecords : [];
 
-  transactions = transactions.map((record) => {
-    if (Number(record.id) === 501) {
-      return { ...record, studentName: "李思彤", type: "续费", note: "续费课时包 24 节", campus: "总部校区", course: "素描", category: "学费", itemName: "" };
-    }
-    if (Number(record.id) === 502) {
-      return { ...record, studentName: "沈佳怡", type: "报名", note: "新生报名首期费用", campus: "东城校区", course: "琵琶", category: "学费", itemName: "" };
-    }
-    if (Number(record.id) === 503) {
-      return { ...record, studentName: "许安然", type: "补课费", note: "单次补课费用", campus: "总部校区", course: "古筝", category: "学费", itemName: "" };
-    }
-    if (Number(record.id) === 504) {
-      return { ...record, studentName: "许妈妈", type: "教材零售", note: "古筝教材基础册，数量 2，收款方式：微信", campus: "总部校区", course: "古筝", category: "教材", itemName: "古筝教材基础册" };
-    }
-    if (Number(record.id) === 505) {
-      return { ...record, studentName: "沈爸爸", type: "教材零售", note: "琵琶指甲套装，数量 1，收款方式：支付宝", campus: "东城校区", course: "琵琶", category: "配件", itemName: "琵琶指甲套装" };
-    }
-    return record;
-  });
+  transactions = Array.isArray(transactions)
+    ? transactions.map((record) => ({
+      ...record,
+      campus: record.campus || "\u603B\u90E8\u6821\u533A",
+      amount: Number(record.amount || 0),
+      category: record.category || "\u5B66\u8D39",
+      itemName: record.itemName || ""
+    }))
+    : [];
 }
 
 function closeModal(modal) {
@@ -264,5 +197,5 @@ function openModal(modal) {
 }
 
 function confirmDelete(label) {
-  return window.confirm(`确认删除${label}吗？删除后将无法恢复。`);
+  return window.confirm(`\u786E\u8BA4\u5220\u9664${label}\u5417\uFF1F\u5220\u9664\u540E\u5C06\u65E0\u6CD5\u6062\u590D\u3002`);
 }

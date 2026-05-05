@@ -3,193 +3,30 @@ if (sessionStorage.getItem("school-admin-auth") !== "true") {
 }
 
 const pageMeta = {
-  enrollment: { tag: "前台业务", title: "新生报名管理" },
-  teacher: { tag: "教学管理", title: "教师管理" },
-  course: { tag: "教学管理", title: "课程管理" },
-  class: { tag: "教学管理", title: "班级管理" },
-  student: { tag: "教学管理", title: "学员管理" },
-  session: { tag: "教学管理", title: "上课管理" },
-  charge: { tag: "教学管理", title: "收费模式" },
-  transaction: { tag: "财务管理", title: "流水管理" }
+  enrollment: { tag: "\u524D\u53F0\u4E1A\u52A1", title: "\u65B0\u751F\u62A5\u540D\u7BA1\u7406" },
+  teacher: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u6559\u5E08\u7BA1\u7406" },
+  course: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u5B66\u79D1\u7BA1\u7406" },
+  class: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u73ED\u7EA7\u7BA1\u7406" },
+  student: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u5B66\u5458\u7BA1\u7406" },
+  session: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u4E0A\u8BFE\u7BA1\u7406" },
+  charge: { tag: "\u6559\u5B66\u7BA1\u7406", title: "\u6536\u8D39\u6A21\u5F0F" },
+  transaction: { tag: "\u8D22\u52A1\u7BA1\u7406", title: "\u6D41\u6C34\u7BA1\u7406" }
 };
 
-const campusOptions = ["全部校区", "总部校区", "东城校区", "西城校区"];
-const retailCategoryOptions = ["教材", "配件", "乐器", "学习用品"];
+const campusOptions = ["\u5168\u90E8\u6821\u533A", "\u603B\u90E8\u6821\u533A"];
+const retailCategoryOptions = ["\u6559\u6750", "\u914D\u4EF6", "\u4E50\u5668", "\u5B66\u4E60\u7528\u54C1"];
 
-let chargePackages = [
-  { id: 1, name: "课时包 24 节", hours: 24, price: 2880 },
-  { id: 2, name: "课时包 48 节", hours: 48, price: 5280 },
-  { id: 3, name: "季度班", hours: 36, price: 3600 }
-];
-
-let courses = [
-  { id: 1, name: "古筝" },
-  { id: 2, name: "琵琶" },
-  { id: 3, name: "素描" },
-  { id: 4, name: "声乐" }
-];
-
-let classTypeOptions = ["成人班", "少儿班", "1对1"];
-
-let teachers = [
-  { id: 1, name: "刘老师", nickname: "刘老师", subject: "古筝", phone: "13800010001" },
-  { id: 2, name: "王老师", nickname: "王老师", subject: "琵琶", phone: "13800010002" },
-  { id: 3, name: "陈老师", nickname: "陈老师", subject: "素描", phone: "13800010003" }
-];
-
-let classes = [
-  { id: 1, name: "古筝成人班", type: "成人班" },
-  { id: 2, name: "琵琶少儿班", type: "少儿班" },
-  { id: 3, name: "素描 1对1", type: "1对1" }
-];
-
-let enrollmentRecords = [
-  {
-    id: 101,
-    enrollDate: "2026-04-20",
-    studentName: "许安然",
-    parentName: "许妈妈",
-    parentPhone: "13800000011",
-    studentAge: "9",
-    birthMonth: "2017-05-02",
-    courseName: "古筝",
-    className: "古筝成人班",
-    teacherName: "刘老师",
-    packageName: "课时包 24 节",
-    paidHours: 24,
-    giftHoursTotal: 2,
-    packageNote: "开班活动赠送 2 课时",
-    remark: "家长比较关注上课时间安排",
-    studentStatus: "active",
-    changeLogs: [],
-    lifecycleLogs: [],
-    renewalLogs: []
-  },
-  {
-    id: 102,
-    enrollDate: "2026-04-22",
-    studentName: "沈佳怡",
-    parentName: "沈爸爸",
-    parentPhone: "13800000012",
-    studentAge: "12",
-    birthMonth: "2014-05-03",
-    courseName: "琵琶",
-    className: "琵琶少儿班",
-    teacherName: "王老师",
-    packageName: "季度班",
-    paidHours: 36,
-    giftHoursTotal: 0,
-    packageNote: "",
-    remark: "",
-    studentStatus: "active",
-    changeLogs: [],
-    lifecycleLogs: [],
-    renewalLogs: []
-  },
-  {
-    id: 103,
-    enrollDate: "2026-04-15",
-    studentName: "李思彤",
-    parentName: "李妈妈",
-    parentPhone: "13800000013",
-    studentAge: "10",
-    birthMonth: "2016-05-01",
-    courseName: "素描",
-    className: "素描 1对1",
-    teacherName: "陈老师",
-    packageName: "课时包 24 节",
-    paidHours: 24,
-    giftHoursTotal: 0,
-    packageNote: "",
-    remark: "需要续费跟进",
-    studentStatus: "active",
-    changeLogs: [],
-    lifecycleLogs: [],
-    renewalLogs: []
-  }
-];
-
-let retailRecords = [
-  {
-    id: 201,
-    date: "2026-04-28",
-    itemName: "古筝教材基础册",
-    category: "教材",
-    campus: "总部校区",
-    course: "古筝",
-    quantity: 2,
-    unitPrice: 68,
-    amount: 136,
-    buyer: "许妈妈",
-    paymentMethod: "微信",
-    operator: "前台A",
-    remark: "配套报名教材"
-  },
-  {
-    id: 202,
-    date: "2026-04-28",
-    itemName: "琵琶指甲套装",
-    category: "配件",
-    campus: "东城校区",
-    course: "琵琶",
-    quantity: 1,
-    unitPrice: 45,
-    amount: 45,
-    buyer: "沈爸爸",
-    paymentMethod: "支付宝",
-    operator: "前台B",
-    remark: "课堂用品"
-  }
-];
-
-let birthdayNotes = {
-  "许安然": "准备生日卡片",
-  "沈佳怡": "课堂祝福"
-};
-
-let todayRecords = [
-  { id: 301, date: "2026-04-28", time: "09:30", item: "新生报名", target: "许安然", course: "古筝", status: "已完成" },
-  { id: 302, date: "2026-04-28", time: "11:10", item: "教材购买", target: "李思彤", course: "素描", status: "已完成" },
-  { id: 303, date: "2026-04-28", time: "15:00", item: "转班申请", target: "沈佳怡", course: "琵琶", status: "待确认" }
-];
-
-let sessionRecords = [
-  {
-    id: 401,
-    date: "2026-04-24",
-    teacherName: "刘老师",
-    className: "古筝成人班",
-    attendance: 1,
-    hours: 1,
-    students: [{ enrollmentId: 101, deductedHours: 1 }]
-  },
-  {
-    id: 402,
-    date: "2026-04-24",
-    teacherName: "王老师",
-    className: "琵琶少儿班",
-    attendance: 1,
-    hours: 1,
-    students: [{ enrollmentId: 102, deductedHours: 1 }]
-  },
-  {
-    id: 403,
-    date: "2026-04-25",
-    teacherName: "陈老师",
-    className: "素描 1对1",
-    attendance: 1,
-    hours: 1,
-    students: [{ enrollmentId: 103, deductedHours: 20 }]
-  }
-];
-
-let transactions = [
-  { id: 501, date: "2026-04-24", studentName: "李思彤", type: "续费", amount: 2880, note: "续费课时包 24 节", campus: "总部校区", course: "素描", category: "学费", itemName: "", sourceType: "renewal", sourceId: 103 },
-  { id: 502, date: "2026-04-23", studentName: "沈佳怡", type: "报名", amount: 1280, note: "新生报名首期费用", campus: "东城校区", course: "琵琶", category: "学费", itemName: "", sourceType: "enrollment", sourceId: 102 },
-  { id: 503, date: "2026-04-22", studentName: "许安然", type: "补课费", amount: 300, note: "单次补课费用", campus: "总部校区", course: "古筝", category: "学费", itemName: "", sourceType: "tuition", sourceId: 101 },
-  { id: 504, date: "2026-04-28", studentName: "许妈妈", type: "教材零售", amount: 136, note: "古筝教材基础册，数量 2，收款方式：微信", campus: "总部校区", course: "古筝", category: "教材", itemName: "古筝教材基础册", sourceType: "retail", sourceId: 201 },
-  { id: 505, date: "2026-04-28", studentName: "沈爸爸", type: "教材零售", amount: 45, note: "琵琶指甲套装，数量 1，收款方式：支付宝", campus: "东城校区", course: "琵琶", category: "配件", itemName: "琵琶指甲套装", sourceType: "retail", sourceId: 202 }
-];
+let chargePackages = [];
+let courses = [];
+let classTypeOptions = ["1\u5BF91", "1\u5BF92", "\u5C0F\u7EC4\u8BFE", "\u73ED\u5236\u8BFE"];
+let teachers = [];
+let classes = [];
+let enrollmentRecords = [];
+let retailRecords = [];
+let birthdayNotes = {};
+let todayRecords = [];
+let sessionRecords = [];
+let transactions = [];
 
 let currentPage = "student";
 let currentBusinessTab = "registration";
