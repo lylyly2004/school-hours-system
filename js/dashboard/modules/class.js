@@ -18,8 +18,23 @@ function getClassBlockingStudents(className) {
   ));
 }
 
+function getClassSessionCount(className) {
+  return sessionRecords.filter((record) => record.className === className).length;
+}
+
 function canDeleteClass(item) {
   return getClassBlockingStudents(item.name).length === 0;
+}
+
+function canEditClass(item) {
+  return getClassSessionCount(item.name) === 0;
+}
+
+function getClassEditBlockReason(item) {
+  if (getClassSessionCount(item.name) > 0) {
+    return "该班级已有上课记录";
+  }
+  return "";
 }
 
 function getClassDeleteBlockReason(item) {
@@ -60,6 +75,8 @@ function renderClasses(keyword = "") {
     const statusLabel = enabled ? "\u542F\u7528\u4E2D" : "\u5DF2\u505C\u7528";
     const toggleLabel = enabled ? "\u505C\u7528" : "\u542F\u7528";
     const toggleClass = enabled ? "table-action-btn" : "table-edit-btn";
+    const editable = canEditClass(item);
+    const editBlockReason = getClassEditBlockReason(item);
     const deletable = canDeleteClass(item);
     const deleteBlockReason = getClassDeleteBlockReason(item);
 
@@ -72,6 +89,7 @@ function renderClasses(keyword = "") {
         <td>${getCurrentClassStudentCount(item.name)}</td>
         <td>
           <button class="table-detail-btn" type="button" data-detail-class-id="${item.id}">\u8BE6\u60C5</button>
+          <button class="table-edit-btn ${editable ? "" : "disabled-btn"}" type="button" data-edit-class-id="${item.id}" data-edit-class-allowed="${editable ? "true" : "false"}" data-edit-class-reason="${editBlockReason}">\u7F16\u8F91</button>
           <button class="${toggleClass}" type="button" data-toggle-class-id="${item.id}">${toggleLabel}</button>
           <button class="table-refund-btn ${deletable ? "" : "disabled-btn"}" type="button" data-delete-class-id="${item.id}" data-delete-class-allowed="${deletable ? "true" : "false"}" data-delete-class-reason="${deleteBlockReason}">\u5220\u9664</button>
         </td>
@@ -186,4 +204,74 @@ function deleteClass(classId) {
   }
 
   showToast("\u73ED\u7EA7\u5DF2\u5220\u9664\u3002\u5386\u53F2\u62A5\u540D\u548C\u4E0A\u8BFE\u8BB0\u5F55\u4ECD\u4F1A\u4FDD\u7559\u539F\u73ED\u7EA7\u540D\u79F0\u4F5C\u4E3A\u8FFD\u6EAF\u3002");
+}
+
+function editClass(classId) {
+  const target = classes.find((item) => Number(item.id) === Number(classId));
+  if (!target) return;
+
+  const sessionCount = getClassSessionCount(target.name);
+  if (sessionCount > 0) {
+    showToast("\u8BE5\u73ED\u7EA7\u5DF2\u6709\u4E0A\u8BFE\u8BB0\u5F55\uFF0C\u4E0D\u652F\u6301\u76F4\u63A5\u6539\u540D");
+    return;
+  }
+
+  const nextNameRaw = window.prompt("\u8BF7\u8F93\u5165\u65B0\u7684\u73ED\u7EA7\u540D\u79F0", target.name);
+  if (nextNameRaw === null) return;
+  const nextName = String(nextNameRaw).trim();
+
+  if (!nextName) {
+    showToast("\u8BF7\u5148\u586B\u5199\u73ED\u7EA7\u540D\u79F0");
+    return;
+  }
+
+  if (classes.some((item) => item.name === nextName && Number(item.id) !== Number(classId))) {
+    showToast("\u8BE5\u73ED\u7EA7\u540D\u79F0\u5DF2\u5B58\u5728");
+    return;
+  }
+
+  const previousName = target.name;
+
+  classes = classes.map((item) => (
+    Number(item.id) === Number(classId)
+      ? { ...item, name: nextName }
+      : item
+  ));
+
+  enrollmentRecords = enrollmentRecords.map((record) => (
+    record.className === previousName
+      ? { ...record, className: nextName }
+      : record
+  ));
+
+  if (selectedSessionClassName === previousName) {
+    selectedSessionClassName = nextName;
+  }
+
+  const currentSelectedClass = refs.classSelect?.value === previousName
+    ? nextName
+    : (refs.classSelect?.value || "");
+
+  populateClassOptions(currentSelectedClass);
+  renderClasses(refs.classSearch?.value || "");
+  if (typeof renderStudents === "function") {
+    renderStudents(refs.studentSearch?.value || "");
+  }
+  if (typeof renderEnrollmentRecords === "function") {
+    renderEnrollmentRecords();
+  }
+  if (typeof renderBirthdayRecords === "function") {
+    renderBirthdayRecords();
+  }
+  if (typeof renderTodayRecords === "function") {
+    renderTodayRecords();
+  }
+  if (typeof renderRenewalList === "function") {
+    renderRenewalList();
+  }
+  if (typeof renderSessionWorkspace === "function") {
+    renderSessionWorkspace();
+  }
+
+  showToast("\u73ED\u7EA7\u540D\u79F0\u5DF2\u66F4\u65B0");
 }

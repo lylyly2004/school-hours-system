@@ -359,6 +359,15 @@ function bindEvents() {
       document.getElementById(`class-detail-row-${detailBtn.dataset.detailClassId}`)?.classList.toggle("hidden");
       return;
     }
+    const editBtn = event.target.closest("[data-edit-class-id]");
+    if (editBtn) {
+      if (editBtn.dataset.editClassAllowed !== "true") {
+        showToast(editBtn.dataset.editClassReason || "当前班级不满足编辑条件");
+        return;
+      }
+      editClass(Number(editBtn.dataset.editClassId));
+      return;
+    }
     const deleteBtn = event.target.closest("[data-delete-class-id]");
     if (deleteBtn) {
       if (deleteBtn.dataset.deleteClassAllowed !== "true") {
@@ -421,8 +430,10 @@ function bindEvents() {
 }
 
 async function init() {
-  loadPersistedData();
-  await syncFromBoundDataFile(false);
+  const hasLocalData = loadPersistedData();
+  if (!hasLocalData) {
+    await syncFromBoundDataFile(false);
+  }
   normalizeSharedData();
   populateRetailBaseOptions();
   populateCampusOptions(campusOptions.find((item) => item !== "鍏ㄩ儴鏍″尯") || "");

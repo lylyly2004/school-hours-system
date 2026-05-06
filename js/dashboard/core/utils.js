@@ -416,25 +416,27 @@ function loadPersistedData() {
 
     if (hasMeaningfulAppData(primaryPayload)) {
       applyPersistedData(primaryPayload);
-      return;
+      return true;
     }
 
     const backupRaw = window.localStorage.getItem(LOCAL_DATA_BACKUP_KEY);
     const backups = backupRaw ? JSON.parse(backupRaw) : [];
-    if (!Array.isArray(backups) || backups.length === 0) return;
+    if (!Array.isArray(backups) || backups.length === 0) return false;
 
     const fallback = [...backups]
       .reverse()
       .map((item) => unwrapPersistedPayload(item))
       .find((item) => hasMeaningfulAppData(item));
 
-    if (!fallback) return;
+    if (!fallback) return false;
 
     applyPersistedData(fallback);
     window.__schoolHoursRecoveredFromBackup = true;
     persistAppData();
+    return true;
   } catch (error) {
     console.warn("Failed to load local app data:", error);
+    return false;
   }
 }
 
@@ -480,7 +482,7 @@ function exportAppData() {
 function importAppDataFromFile(file) {
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const parsed = JSON.parse(String(reader.result || ""));
       const payload = parsed && typeof parsed === "object" && parsed.data ? parsed.data : parsed;
@@ -490,6 +492,7 @@ function importAppDataFromFile(file) {
       applyPersistedData(payload);
       normalizeSharedData();
       persistAppData();
+      await persistBoundDataFile();
       window.alert("数据已导入，页面将刷新以加载最新内容。");
       window.location.reload();
     } catch (error) {
