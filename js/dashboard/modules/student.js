@@ -23,7 +23,7 @@ function getStudentPaymentLogs(record) {
   const enrollmentPayment = {
     type: "\u62A5\u540D",
     packageName: record.enrollmentPackageName || record.packageName || "-",
-    amount: Number(record.enrollmentPaidAmount ?? getPackagePrice(record.enrollmentPackageName || record.packageName || "")),
+    amount: Number(record.enrollmentPaidAmount ?? getPackagePrice(record.enrollmentPackageId || record.enrollmentPackageName || record.packageId || record.packageName || "")),
     giftHours: Number(record.giftHoursTotal || 0),
     date: record.enrollmentPaidDate || record.enrollDate || "-"
   };

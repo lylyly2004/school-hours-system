@@ -16,34 +16,49 @@ function closeChargePackageModal() {
   closeModal(refs.chargePackageModal);
 }
 
-function renameChargePackageAcrossSystem(oldName, nextPackage) {
-  if (!oldName || oldName === nextPackage.name) return;
+function renameChargePackageAcrossSystem(previousPackage, nextPackage) {
+  if (!previousPackage || !nextPackage) return;
+
+  const matchesPackage = (packageId, packageName) => {
+    if (packageId !== undefined && packageId !== null && packageId !== "") {
+      return String(packageId) === String(previousPackage.id);
+    }
+    return packageName === previousPackage.name;
+  };
 
   enrollmentRecords = enrollmentRecords.map((record) => {
     const nextRenewalLogs = Array.isArray(record.renewalLogs)
       ? record.renewalLogs.map((log) => (
-        log.packageName === oldName ? { ...log, packageName: nextPackage.name } : log
+        matchesPackage(log.packageId, log.packageName)
+          ? { ...log, packageId: nextPackage.id, packageName: nextPackage.name }
+          : log
       ))
       : [];
 
     return {
       ...record,
-      packageName: record.packageName === oldName ? nextPackage.name : record.packageName,
-      enrollmentPackageName: record.enrollmentPackageName === oldName ? nextPackage.name : record.enrollmentPackageName,
+      packageId: matchesPackage(record.packageId, record.packageName) ? nextPackage.id : record.packageId,
+      packageName: matchesPackage(record.packageId, record.packageName) ? nextPackage.name : record.packageName,
+      enrollmentPackageId: matchesPackage(record.enrollmentPackageId, record.enrollmentPackageName) ? nextPackage.id : record.enrollmentPackageId,
+      enrollmentPackageName: matchesPackage(record.enrollmentPackageId, record.enrollmentPackageName) ? nextPackage.name : record.enrollmentPackageName,
       renewalLogs: nextRenewalLogs
     };
   });
 }
 
-function getChargePackageBlockingStudents(packageName) {
+function getChargePackageBlockingStudents(targetPackage) {
   return enrollmentRecords.filter((record) => (
-    (record.studentStatus || "active") !== "refunded" &&
-    record.packageName === packageName
+    (record.studentStatus || "active") !== "refunded" && (
+      String(record.packageId || "") === String(targetPackage.id) ||
+      String(record.enrollmentPackageId || "") === String(targetPackage.id) ||
+      record.packageName === targetPackage.name ||
+      record.enrollmentPackageName === targetPackage.name
+    )
   ));
 }
 
 function getChargePackageDeleteBlockReason(pkg) {
-  const blockingStudents = getChargePackageBlockingStudents(pkg.name);
+  const blockingStudents = getChargePackageBlockingStudents(pkg);
   if (blockingStudents.length > 0) {
     return "该收费模式还有在读或停课学员使用";
   }
@@ -54,7 +69,7 @@ function deleteChargePackage(packageId) {
   const target = chargePackages.find((pkg) => Number(pkg.id) === Number(packageId));
   if (!target) return;
 
-  const blockingStudents = getChargePackageBlockingStudents(target.name);
+  const blockingStudents = getChargePackageBlockingStudents(target);
   if (blockingStudents.length > 0) {
     showToast("该收费模式还有在读或停课学员使用");
     return;
@@ -65,7 +80,8 @@ function deleteChargePackage(packageId) {
   }
 
   chargePackages = chargePackages.filter((pkg) => Number(pkg.id) !== Number(packageId));
-  populatePackageOptions(chargePackages[0]?.name || "");
+  const nextPackage = chargePackages[0];
+  populatePackageOptions(nextPackage ? String(nextPackage.id) : "");
   renderChargePackages();
   if (typeof renderStudents === "function") {
     renderStudents(refs.studentSearch?.value || "");
@@ -88,27 +104,31 @@ function saveChargePackage() {
   }
 
   const duplicated = chargePackages.some((pkg) => (
-    pkg.name === name && Number(pkg.id) !== Number(editingChargePackageId)
+    pkg.name === name && Number(pkg.price) === price && Number(pkg.id) !== Number(editingChargePackageId)
   ));
   if (duplicated) {
     showToast("该收费模式已存在");
     return;
   }
 
+  let selectedPackageId = "";
   if (isEditing) {
     const previousPackage = chargePackages.find((pkg) => Number(pkg.id) === Number(editingChargePackageId));
+    const updatedPackage = { id: previousPackage?.id, name, hours, price };
     chargePackages = chargePackages.map((pkg) => (
       Number(pkg.id) === Number(editingChargePackageId)
         ? { ...pkg, name, hours, price }
         : pkg
     ));
-    renameChargePackageAcrossSystem(previousPackage?.name || "", { name, hours, price });
+    renameChargePackageAcrossSystem(previousPackage, updatedPackage);
+    selectedPackageId = String(updatedPackage.id || "");
   } else {
-    chargePackages.unshift({ id: uid(), name, hours, price });
+    const createdPackage = { id: uid(), name, hours, price };
+    chargePackages.unshift(createdPackage);
+    selectedPackageId = String(createdPackage.id);
   }
 
-  const selectedPackageName = name;
-  populatePackageOptions(selectedPackageName);
+  populatePackageOptions(selectedPackageId);
   renderChargePackages();
   if (typeof renderStudents === "function") {
     renderStudents(refs.studentSearch?.value || "");
@@ -130,7 +150,7 @@ function renderChargePackages() {
         </div>
         <div class="inline-actions">
           <button class="table-edit-btn" type="button" data-edit-charge-package-id="${pkg.id}">编辑</button>
-          <button class="table-action-btn" type="button" data-delete-charge-package-id="${pkg.id}" data-delete-charge-allowed="${getChargePackageBlockingStudents(pkg.name).length === 0 ? "true" : "false"}" data-delete-charge-reason="${getChargePackageDeleteBlockReason(pkg)}">删除</button>
+          <button class="table-action-btn" type="button" data-delete-charge-package-id="${pkg.id}" data-delete-charge-allowed="${getChargePackageBlockingStudents(pkg).length === 0 ? "true" : "false"}" data-delete-charge-reason="${getChargePackageDeleteBlockReason(pkg)}">删除</button>
         </div>
       </div>
       <strong>${pkg.hours} 课时</strong>

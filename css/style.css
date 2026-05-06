@@ -347,6 +347,15 @@ input {
   align-items: center;
 }
 
+.data-file-status {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #f7efe5;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .search-box {
   position: relative;
   min-width: 280px;
@@ -441,6 +450,10 @@ input {
   background-repeat: no-repeat;
 }
 
+input[type="date"] {
+  cursor: pointer;
+}
+
 .form-section {
   margin-bottom: 26px;
   padding: 20px;
@@ -531,6 +544,45 @@ input {
   gap: 14px;
   justify-content: flex-end;
   margin-bottom: 24px;
+}
+
+#teacherModal .enrollment-actions {
+  margin-top: 24px;
+}
+
+.management-editor-list {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.management-editor-list-head {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.management-editor-items {
+  display: grid;
+  gap: 10px;
+}
+
+.management-editor-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffdfa;
+}
+
+.management-editor-empty {
+  padding: 14px 16px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  background: #fffdfa;
 }
 
 .inline-actions {

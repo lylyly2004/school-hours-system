@@ -71,7 +71,10 @@
           </label>
           <button class="secondary-btn" type="button" id="exportDataBtn">导出数据</button>
           <button class="secondary-btn" type="button" id="importDataBtn">导入数据</button>
+          <button class="secondary-btn" type="button" id="bindDataFileBtn">绑定数据文件</button>
+          <button class="secondary-btn" type="button" id="syncDataFileBtn">从文件同步</button>
           <input class="hidden" type="file" id="importDataInput" accept=".json,application/json">
+          <span class="data-file-status" id="dataFileStatus">未绑定数据文件</span>
           <button class="ghost-btn" type="button" id="logoutBtn">退出登录</button>
         </div>
       </header>
@@ -950,8 +953,9 @@
       <div class="form-field">
         <label id="managementEditorLabel">名称</label>
         <input type="text" id="managementEditorInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
-      </div>
-      <div class="enrollment-actions top-space">
+        </div>
+        <div class="management-editor-list hidden" id="managementEditorList"></div>
+        <div class="enrollment-actions top-space">
         <button class="primary-btn" type="button" id="saveManagementEditorBtn">保存</button>
         <button class="secondary-btn" type="button" id="cancelManagementEditorBtn">取消</button>
       </div>

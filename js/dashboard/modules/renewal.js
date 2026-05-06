@@ -93,7 +93,7 @@ function resetRenewalForm() {
   refs.renewalDiscountMode.value = "discount";
   refs.renewalDiscountAmount.value = "0";
   refs.renewalNoteInput.value = "";
-  populatePackageOptions(chargePackages[0]?.name || "");
+  populatePackageOptions(String(chargePackages[0]?.id || ""));
   renderRenewalDiscountRates();
   updateRenewalDiscountMode();
   calculateRenewalReceivedAmount();
@@ -108,7 +108,7 @@ function openRenewalForm(recordId) {
   refs.renewalFormTitle.textContent = `${target.studentName} \u7EED\u8D39\u529E\u7406`;
   refs.renewalStudentName.value = target.studentName || "";
   refs.renewalCourseName.value = target.courseName || "";
-  populatePackageOptions(target.packageName || chargePackages[0]?.name || "");
+  populatePackageOptions(target.packageId || target.packageName || String(chargePackages[0]?.id || ""));
   calculateRenewalReceivedAmount();
   openModal(refs.renewalFormModal);
 }
@@ -119,13 +119,21 @@ function saveRenewal() {
   const target = enrollmentRecords.find((item) => Number(item.id) === Number(renewingStudentId));
   if (!target) return;
 
-  const packageName = refs.renewalPackageSelect.value;
-  const packageHours = getPackageHours(packageName);
+  const selectedPackage = findPackage(refs.renewalPackageSelect.value);
+  if (!selectedPackage) {
+    showToast("\u8BF7\u5148\u9009\u62E9\u6709\u6548\u7684\u8BFE\u65F6\u5305");
+    return;
+  }
+
+  const packageId = selectedPackage.id;
+  const packageName = selectedPackage.name;
+  const packageHours = Number(selectedPackage.hours || 0);
   const giftHours = Number(refs.renewalGiftHoursInput.value || 0);
   const receivedAmount = Number(refs.renewalReceivedInput.value || 0);
   const note = refs.renewalNoteInput.value.trim();
   const actionRecord = {
     date: getTodayString(),
+    packageId,
     packageName,
     packageHours,
     giftHours,
@@ -138,6 +146,7 @@ function saveRenewal() {
     const renewalLogs = Array.isArray(record.renewalLogs) ? record.renewalLogs : [];
     return {
       ...record,
+      packageId,
       packageName,
       paidHours: Number(record.paidHours || 0) + packageHours,
       giftHoursTotal: Number(record.giftHoursTotal || 0) + giftHours,

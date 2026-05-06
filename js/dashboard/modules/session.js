@@ -1,6 +1,7 @@
 const SESSION_PAGE_SIZE = 10;
 let sessionRecordPage = 1;
 let currentSessionView = "editor";
+let shouldAutoSelectSessionStudents = true;
 
 function getSessionSelectableStudents(teacherName = selectedSessionTeacherName, className = selectedSessionClassName) {
   if (!teacherName || !className) return [];
@@ -53,6 +54,19 @@ function syncSessionStaticLabels() {
   if (title) title.textContent = "\u4e0a\u8bfe\u8bb0\u5f55";
   if (refs.sessionPrevPageBtn) refs.sessionPrevPageBtn.textContent = "\u4e0a\u4e00\u9875";
   if (refs.sessionNextPageBtn) refs.sessionNextPageBtn.textContent = "\u4e0b\u4e00\u9875";
+}
+
+function ensureSessionTeacherSelection() {
+  if (!Array.isArray(teachers) || teachers.length === 0) {
+    selectedSessionTeacherName = "";
+    selectedSessionClassName = "";
+    return;
+  }
+
+  const hasCurrentTeacher = teachers.some((teacher) => teacher.name === selectedSessionTeacherName);
+  if (!selectedSessionTeacherName || !hasCurrentTeacher) {
+    selectedSessionTeacherName = teachers[0]?.name || "";
+  }
 }
 
 function renderSessionView() {
@@ -122,12 +136,14 @@ function renderSessionClassTabs() {
     refs.sessionClassTabs.innerHTML = "";
     selectedSessionClassName = "";
     selectedSessionStudentIds = [];
+    shouldAutoSelectSessionStudents = true;
     renderSessionStudents();
     return;
   }
 
   if (!selectedSessionClassName || !classesForTeacher.includes(selectedSessionClassName)) {
     selectedSessionClassName = classesForTeacher[0];
+    shouldAutoSelectSessionStudents = true;
   }
 
   refs.sessionClassTabs.innerHTML = classesForTeacher.map((className) => `
@@ -139,6 +155,11 @@ function renderSessionStudents() {
   const candidates = getSessionSelectableStudents();
   const candidateIds = candidates.map((record) => Number(record.id));
   selectedSessionStudentIds = selectedSessionStudentIds.filter((id) => candidateIds.includes(Number(id)));
+
+  if (shouldAutoSelectSessionStudents && candidates.length > 0 && selectedSessionStudentIds.length === 0) {
+    selectedSessionStudentIds = [...candidateIds];
+    shouldAutoSelectSessionStudents = false;
+  }
 
   if (candidates.length === 0) {
     refs.sessionStudentList.innerHTML = `<p class="session-empty-note">\u5f53\u524d\u6559\u5e08\u6216\u73ed\u7ea7\u4e0b\u6682\u65e0\u53ef\u8bb0\u5f55\u8bfe\u65f6\u7684\u5728\u8bfb\u5b66\u5458\u3002</p>`;
@@ -256,12 +277,14 @@ function renderSessionRecords() {
 }
 
 function resetSessionSelection() {
+  shouldAutoSelectSessionStudents = false;
   selectedSessionStudentIds = [];
   renderSessionStudents();
 }
 
 function renderSessionWorkspace() {
   syncSessionStaticLabels();
+  ensureSessionTeacherSelection();
   populateSessionRecordFilters();
   renderSessionView();
   if (refs.sessionLessonDateInput && !refs.sessionLessonDateInput.value) {
@@ -278,7 +301,9 @@ function selectSessionTeacher(teacherName) {
   selectedSessionTeacherName = teacherName;
   selectedSessionClassName = "";
   selectedSessionStudentIds = [];
+  shouldAutoSelectSessionStudents = true;
   sessionRecordPage = 1;
+  persistAppData();
   closeModal(refs.sessionTeacherModal);
   renderSessionWorkspace();
 }
@@ -331,6 +356,7 @@ function saveSessionRecord() {
   };
 
   sessionRecords.unshift(session);
+  shouldAutoSelectSessionStudents = true;
   selectedSessionStudentIds = [];
   sessionRecordPage = 1;
   renderSessionWorkspace();

@@ -47,7 +47,7 @@ function syncEnrollmentTransaction(record) {
     date: record.enrollmentPaidDate || record.enrollDate || getTodayString(),
     studentName: record.studentName || "",
     type: "\u62A5\u540D",
-    amount: Number(record.enrollmentPaidAmount || getPackagePrice(record.enrollmentPackageName || record.packageName || "")),
+    amount: Number(record.enrollmentPaidAmount || getPackagePrice(record.enrollmentPackageId || record.enrollmentPackageName || record.packageId || record.packageName || "")),
     note: `${record.enrollmentPackageName || record.packageName || ""} \u62A5\u540D\u9996\u671F\u8D39\u7528`,
     campus: record.campus || "\u603B\u90E8\u6821\u533A",
     course: record.courseName || "",
@@ -86,11 +86,11 @@ function resetEnrollmentForm() {
   refs.parentPhoneInput.value = "";
   refs.studentAgeInput.value = "";
   refs.birthMonthInput.value = "";
-  populateCampusOptions(campusOptions.find((item) => item !== "鍏ㄩ儴鏍″尯") || "");
+  populateCampusOptions(campusOptions.find((item) => item !== "閸忋劑鍎撮弽鈥冲隘") || "");
   populateCourseOptions(courses.find((item) => isCourseEnabled(item))?.name || "");
   populateClassOptions(classes.find((item) => isClassEnabled(item))?.name || "");
   populateTeacherOptions(teachers[0]?.name || "");
-  populatePackageOptions(chargePackages[0]?.name || "");
+  populatePackageOptions(String(chargePackages[0]?.id || ""));
   refs.giftHoursInput.value = "0";
   refs.packageNoteInput.value = "";
   refs.remarkInput.value = "";
@@ -159,11 +159,11 @@ function loadEnrollmentForEdit(recordId) {
   refs.parentPhoneInput.value = record.parentPhone || "";
   refs.studentAgeInput.value = record.studentAge || "";
   refs.birthMonthInput.value = record.birthMonth || "";
-  populateCampusOptions(record.campus || campusOptions.find((item) => item !== "鍏ㄩ儴鏍″尯") || "");
+  populateCampusOptions(record.campus || campusOptions.find((item) => item !== "閸忋劑鍎撮弽鈥冲隘") || "");
   populateCourseOptions(record.courseName || "");
   populateClassOptions(record.className || "");
   populateTeacherOptions(record.teacherName || "");
-  populatePackageOptions(record.packageName || "");
+  populatePackageOptions(record.packageId || record.packageName || "");
   refs.giftHoursInput.value = String(record.giftHoursTotal || 0);
   refs.packageNoteInput.value = record.packageNote || "";
   refs.remarkInput.value = record.remark || "";
@@ -178,6 +178,7 @@ function saveEnrollment() {
     ? enrollmentRecords.find((record) => Number(record.id) === Number(editingEnrollmentId))
     : null;
   const isLocked = originalRecord ? hasEnrollmentSessionHistory(originalRecord.id) : false;
+  const selectedPackage = findPackage(refs.packageSelect.value);
 
   const payload = {
     enrollDate: refs.enrollDateInput.value,
@@ -190,17 +191,19 @@ function saveEnrollment() {
     courseName: refs.courseSelect.value,
     className: refs.classSelect.value,
     teacherName: refs.teacherSelect.value,
-    packageName: refs.packageSelect.value,
-    paidHours: getPackageHours(refs.packageSelect.value),
-    enrollmentPackageName: refs.packageSelect.value,
-    enrollmentPaidAmount: getPackagePrice(refs.packageSelect.value),
+    packageId: selectedPackage?.id || "",
+    packageName: selectedPackage?.name || "",
+    paidHours: getPackageHours(selectedPackage?.id || refs.packageSelect.value, selectedPackage?.name || ""),
+    enrollmentPackageId: selectedPackage?.id || "",
+    enrollmentPackageName: selectedPackage?.name || "",
+    enrollmentPaidAmount: getPackagePrice(selectedPackage?.id || refs.packageSelect.value, selectedPackage?.name || ""),
     enrollmentPaidDate: refs.enrollDateInput.value,
     giftHoursTotal: Number(refs.giftHoursInput.value || 0),
     packageNote: refs.packageNoteInput.value.trim(),
     remark: refs.remarkInput.value.trim()
   };
 
-  if (!payload.enrollDate || !payload.studentName || !payload.campus || !payload.courseName || !payload.className || !payload.teacherName || !payload.packageName) {
+  if (!payload.enrollDate || !payload.studentName || !payload.campus || !payload.courseName || !payload.className || !payload.teacherName || !payload.packageId) {
     showToast("\u8bf7\u5148\u5b8c\u6574\u586b\u5199\u65b0\u751f\u62a5\u540d\u7684\u5fc5\u586b\u4fe1\u606f");
     return;
   }
@@ -210,10 +213,12 @@ function saveEnrollment() {
     payload.courseName = originalRecord.courseName;
     payload.className = originalRecord.className;
     payload.teacherName = originalRecord.teacherName;
+    payload.packageId = originalRecord.packageId || payload.packageId;
     payload.packageName = originalRecord.packageName;
     payload.paidHours = Number(originalRecord.paidHours || 0);
+    payload.enrollmentPackageId = originalRecord.enrollmentPackageId || originalRecord.packageId || payload.enrollmentPackageId;
     payload.enrollmentPackageName = originalRecord.enrollmentPackageName || originalRecord.packageName;
-    payload.enrollmentPaidAmount = Number(originalRecord.enrollmentPaidAmount ?? getPackagePrice(originalRecord.enrollmentPackageName || originalRecord.packageName || ""));
+    payload.enrollmentPaidAmount = Number(originalRecord.enrollmentPaidAmount ?? getPackagePrice(originalRecord.enrollmentPackageId || originalRecord.enrollmentPackageName || originalRecord.packageId || originalRecord.packageName || ""));
     payload.enrollmentPaidDate = originalRecord.enrollmentPaidDate || originalRecord.enrollDate;
   }
 
@@ -234,8 +239,9 @@ function saveEnrollment() {
         ? {
           ...record,
           ...payload,
+          enrollmentPackageId: isLocked ? payload.enrollmentPackageId : payload.packageId,
           enrollmentPackageName: isLocked ? payload.enrollmentPackageName : payload.packageName,
-          enrollmentPaidAmount: isLocked ? payload.enrollmentPaidAmount : getPackagePrice(payload.packageName),
+          enrollmentPaidAmount: isLocked ? payload.enrollmentPaidAmount : getPackagePrice(payload.packageId || payload.packageName || ""),
           enrollmentPaidDate: isLocked ? payload.enrollmentPaidDate : payload.enrollDate
         }
         : record

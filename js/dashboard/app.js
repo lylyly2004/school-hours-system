@@ -27,9 +27,12 @@ function bindEvents() {
     openModal(refs.renewalModal);
   });
   refs.closeModalBtn.addEventListener("click", () => closeModal(refs.renewalModal));
-  refs.modalMask.addEventListener("click", () => closeModal(refs.renewalModal));
 
   refs.openSessionManageBtn.addEventListener("click", () => switchPage("session"));
+  refs.bindDataFileBtn?.addEventListener("click", bindDataFile);
+  refs.syncDataFileBtn?.addEventListener("click", () => {
+    void syncFromBoundDataFile(true);
+  });
   refs.exportDataBtn.addEventListener("click", exportAppData);
   refs.importDataBtn.addEventListener("click", () => {
     refs.importDataInput.value = "";
@@ -52,13 +55,11 @@ function bindEvents() {
   refs.addTeacherBtn.addEventListener("click", () => openTeacherModal());
   refs.closeTeacherModalBtn.addEventListener("click", () => closeModal(refs.teacherModal));
   refs.cancelTeacherBtn.addEventListener("click", () => closeModal(refs.teacherModal));
-  refs.teacherModalMask.addEventListener("click", () => closeModal(refs.teacherModal));
   refs.saveTeacherBtn.addEventListener("click", saveTeacher);
 
   refs.addChargePackageBtn.addEventListener("click", () => openChargePackageModal());
   refs.closeChargePackageModalBtn.addEventListener("click", closeChargePackageModal);
   refs.cancelChargePackageBtn.addEventListener("click", closeChargePackageModal);
-  refs.chargePackageModalMask.addEventListener("click", closeChargePackageModal);
   refs.saveChargePackageBtn.addEventListener("click", saveChargePackage);
 
   refs.courseQuickAddBtn.addEventListener("click", () => openManagementEditor("course-create"));
@@ -71,7 +72,15 @@ function bindEvents() {
   refs.saveManagementEditorBtn.addEventListener("click", saveManagementEditor);
   refs.closeManagementEditorBtn.addEventListener("click", closeManagementEditor);
   refs.cancelManagementEditorBtn.addEventListener("click", closeManagementEditor);
-  refs.managementEditorMask.addEventListener("click", closeManagementEditor);
+  refs.managementEditorList?.addEventListener("click", (event) => {
+    const deleteBtn = event.target.closest("[data-delete-class-type]");
+    if (!deleteBtn) return;
+    if (deleteBtn.dataset.deleteClassTypeAllowed !== "true") {
+      showToast(deleteBtn.dataset.deleteClassTypeReason || "当前授课形式不满足删除条件");
+      return;
+    }
+    deleteClassType(deleteBtn.dataset.deleteClassType);
+  });
 
   refs.saveEnrollmentBtn.addEventListener("click", saveEnrollment);
   refs.resetEnrollmentBtn.addEventListener("click", resetEnrollmentForm);
@@ -79,7 +88,6 @@ function bindEvents() {
   refs.addRetailBtn.addEventListener("click", () => openRetailModal());
   refs.closeRetailModalBtn.addEventListener("click", () => closeModal(refs.retailModal));
   refs.cancelRetailBtn.addEventListener("click", () => closeModal(refs.retailModal));
-  refs.retailModalMask.addEventListener("click", () => closeModal(refs.retailModal));
   refs.saveRetailBtn.addEventListener("click", saveRetail);
   refs.retailQuantityInput.addEventListener("input", () => {
     refs.retailAmountInput.value = String(Number(refs.retailQuantityInput.value || 0) * Number(refs.retailUnitPriceInput.value || 0));
@@ -141,14 +149,12 @@ function bindEvents() {
   refs.saveRenewalBtn.addEventListener("click", saveRenewal);
   refs.cancelRenewalBtn.addEventListener("click", () => closeModal(refs.renewalFormModal));
   refs.closeRenewalFormBtn.addEventListener("click", () => closeModal(refs.renewalFormModal));
-  refs.renewalFormModalMask.addEventListener("click", () => closeModal(refs.renewalFormModal));
 
   refs.chooseTeacherBtn.addEventListener("click", () => {
     renderSessionTeacherPicker();
     openModal(refs.sessionTeacherModal);
   });
   refs.closeSessionTeacherModalBtn.addEventListener("click", () => closeModal(refs.sessionTeacherModal));
-  refs.sessionTeacherMask.addEventListener("click", () => closeModal(refs.sessionTeacherModal));
   refs.sessionSelectAllBtn.addEventListener("click", () => {
     const candidates = getSessionSelectableStudents().map((record) => Number(record.id));
     selectedSessionStudentIds = candidates;
@@ -165,6 +171,11 @@ function bindEvents() {
   refs.sessionPrevPageBtn.addEventListener("click", () => changeSessionRecordPage(-1));
   refs.sessionNextPageBtn.addEventListener("click", () => changeSessionRecordPage(1));
   refs.saveSessionBtn.addEventListener("click", saveSessionRecord);
+  refs.sessionLessonDateInput?.addEventListener("click", () => {
+    if (typeof refs.sessionLessonDateInput.showPicker === "function") {
+      refs.sessionLessonDateInput.showPicker();
+    }
+  });
 
   refs.studentStatusFilters.addEventListener("click", (event) => {
     const target = event.target.closest("[data-student-filter]");
@@ -207,7 +218,6 @@ function bindEvents() {
 
   refs.closeStudentAdjustBtn.addEventListener("click", () => closeModal(refs.studentAdjustModal));
   refs.cancelStudentAdjustBtn.addEventListener("click", () => closeModal(refs.studentAdjustModal));
-  refs.studentAdjustMask.addEventListener("click", () => closeModal(refs.studentAdjustModal));
   refs.saveStudentAdjustBtn.addEventListener("click", saveStudentAdjust);
 
   refs.enrollmentTableBody.addEventListener("click", (event) => {
@@ -373,6 +383,7 @@ function bindEvents() {
     const tabBtn = event.target.closest("[data-session-class]");
     if (!tabBtn) return;
     selectedSessionClassName = tabBtn.dataset.sessionClass;
+    shouldAutoSelectSessionStudents = true;
     selectedSessionStudentIds = [];
     renderSessionWorkspace();
   });
@@ -380,6 +391,7 @@ function bindEvents() {
   refs.sessionStudentList.addEventListener("change", (event) => {
     const checkbox = event.target.closest(".session-student-checkbox");
     if (!checkbox) return;
+    shouldAutoSelectSessionStudents = false;
     const recordId = Number(checkbox.value);
     if (checkbox.checked) {
       if (!selectedSessionStudentIds.includes(recordId)) selectedSessionStudentIds.push(recordId);
@@ -408,8 +420,9 @@ function bindEvents() {
   });
 }
 
-function init() {
+async function init() {
   loadPersistedData();
+  await syncFromBoundDataFile(false);
   normalizeSharedData();
   populateRetailBaseOptions();
   populateCampusOptions(campusOptions.find((item) => item !== "鍏ㄩ儴鏍″尯") || "");
@@ -440,6 +453,11 @@ function init() {
   refs.todayCourseFilter.value = "鍏ㄩ儴璇剧▼";
   updateHeader();
   bindEvents();
+  void refreshDataFileStatus();
+  if (window.__schoolHoursRecoveredFromBackup) {
+    showToast("已从最近一次本地备份恢复数据。");
+    window.__schoolHoursRecoveredFromBackup = false;
+  }
   window.addEventListener("beforeunload", persistAppData);
 }
 

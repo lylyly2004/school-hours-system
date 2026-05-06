@@ -83,20 +83,20 @@ function setGroupExpanded(groupName, expanded) {
 function switchBusinessTab(tabName) {
   currentBusinessTab = tabName;
   const titleMap = {
-    registration: "新生报名管理",
-    retail: "教材零售",
-    birthday: "学员生日",
-    today: "今日办理"
+    registration: "鏂扮敓鎶ュ悕绠＄悊",
+    retail: "鏁欐潗闆跺敭",
+    birthday: "瀛﹀憳鐢熸棩",
+    today: "浠婃棩鍔炵悊"
   };
   refs.businessTabs.forEach((button) => button.classList.toggle("active", button.dataset.businessTab === tabName));
   refs.businessPanels.forEach((panel) => panel.classList.toggle("active", panel.id === `business-${tabName}`));
-  refs.enrollmentSectionTitle.textContent = titleMap[tabName] || "新生报名管理";
+  refs.enrollmentSectionTitle.textContent = titleMap[tabName] || "鏂扮敓鎶ュ悕绠＄悊";
 }
 
 function populateTeacherOptions(selectedTeacher = "") {
   const options = teachers.length > 0
     ? teachers.map((teacher) => `<option value="${teacher.name}" ${teacher.name === selectedTeacher ? "selected" : ""}>${teacher.name}</option>`).join("")
-    : `<option value="">请先添加教师</option>`;
+    : `<option value="">璇峰厛娣诲姞鏁欏笀</option>`;
   refs.teacherSelect.innerHTML = options;
   refs.adjustTeacherSelect.innerHTML = options;
 }
@@ -104,7 +104,7 @@ function populateTeacherOptions(selectedTeacher = "") {
 function populateCampusOptions(selectedCampus = "") {
   if (!refs.campusSelect) return;
   refs.campusSelect.innerHTML = campusOptions
-    .filter((item) => item !== "鍏ㄩ儴鏍″尯")
+    .filter((item) => item !== "閸忋劑鍎撮弽鈥冲隘")
     .map((item) => `<option value="${item}" ${item === selectedCampus ? "selected" : ""}>${item}</option>`)
     .join("");
 }
@@ -149,11 +149,12 @@ function populateClassOptions(selectedClass = "") {
 }
 
 function populatePackageOptions(selectedPackage = "") {
+  const isSelected = (pkg) => String(pkg.id) === String(selectedPackage) || pkg.name === selectedPackage;
   refs.packageSelect.innerHTML = chargePackages.map((pkg) => `
-    <option value="${pkg.name}" ${pkg.name === selectedPackage ? "selected" : ""}>${pkg.name} - ${pkg.hours}课时 - ${pkg.price}</option>
+    <option value="${pkg.id}" ${isSelected(pkg) ? "selected" : ""}>${pkg.name} - ${pkg.hours}课时 - ${pkg.price}</option>
   `).join("");
   refs.renewalPackageSelect.innerHTML = chargePackages.map((pkg) => `
-    <option value="${pkg.name}" ${pkg.name === selectedPackage ? "selected" : ""}>${pkg.name} - ${pkg.hours}课时 - ${pkg.price}</option>
+    <option value="${pkg.id}" ${isSelected(pkg) ? "selected" : ""}>${pkg.name} - ${pkg.hours}课时 - ${pkg.price}</option>
   `).join("");
 }
 

@@ -1,3 +1,55 @@
+function canDeleteClassType(typeName) {
+  return !classes.some((item) => item.type === typeName);
+}
+
+function getClassTypeDeleteReason(typeName) {
+  if (!canDeleteClassType(typeName)) {
+    return "该授课形式已有班级使用";
+  }
+  return "";
+}
+
+function renderManagementEditorList() {
+  if (!refs.managementEditorList) return;
+
+  if (managementEditorMode !== "class-type-create") {
+    refs.managementEditorList.classList.add("hidden");
+    refs.managementEditorList.innerHTML = "";
+    return;
+  }
+
+  refs.managementEditorList.classList.remove("hidden");
+
+  if (!Array.isArray(classTypeOptions) || classTypeOptions.length === 0) {
+    refs.managementEditorList.innerHTML = `
+      <div class="management-editor-empty">当前还没有授课形式，可直接新增。</div>
+    `;
+    return;
+  }
+
+  refs.managementEditorList.innerHTML = `
+    <div class="management-editor-list-head">已有授课形式</div>
+    <div class="management-editor-items">
+      ${classTypeOptions.map((item) => {
+        const deletable = canDeleteClassType(item);
+        const reason = getClassTypeDeleteReason(item);
+        return `
+          <div class="management-editor-item">
+            <span>${item}</span>
+            <button
+              class="table-refund-btn ${deletable ? "" : "disabled-btn"}"
+              type="button"
+              data-delete-class-type="${item}"
+              data-delete-class-type-allowed="${deletable ? "true" : "false"}"
+              data-delete-class-type-reason="${reason}"
+            >删除</button>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
 function openManagementEditor(mode, payload = {}) {
   managementEditorMode = mode;
   editingCourseId = payload.courseId || null;
@@ -20,12 +72,17 @@ function openManagementEditor(mode, payload = {}) {
     refs.managementEditorInput.value = "";
   }
 
+  renderManagementEditorList();
   openModal(refs.managementEditorModal);
 }
 
 function closeManagementEditor() {
   managementEditorMode = "";
   editingCourseId = null;
+  if (refs.managementEditorList) {
+    refs.managementEditorList.classList.add("hidden");
+    refs.managementEditorList.innerHTML = "";
+  }
   closeModal(refs.managementEditorModal);
 }
 
@@ -81,6 +138,23 @@ function saveManagementEditor() {
   populateClassTypeOptions(value);
   populateClassOptions(refs.classSelect?.value || "");
   renderClasses(refs.classSearch?.value || "");
+  renderManagementEditorList();
   closeManagementEditor();
   showToast("\u6388\u8BFE\u5F62\u5F0F\u5DF2\u6DFB\u52A0");
+}
+
+function deleteClassType(typeName) {
+  if (!canDeleteClassType(typeName)) {
+    showToast(getClassTypeDeleteReason(typeName) || "当前授课形式不满足删除条件");
+    return;
+  }
+
+  if (!window.confirm(`确认删除授课形式“${typeName}”吗？`)) {
+    return;
+  }
+
+  classTypeOptions = classTypeOptions.filter((item) => item !== typeName);
+  populateClassTypeOptions(refs.classTypeSelect?.value === typeName ? (classTypeOptions[0] || "") : (refs.classTypeSelect?.value || ""));
+  renderManagementEditorList();
+  showToast("授课形式已删除");
 }
