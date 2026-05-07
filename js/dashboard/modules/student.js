@@ -3,6 +3,27 @@ let currentStudentDetailPage = 1;
 let currentStudentDetailSection = "session";
 const STUDENT_DETAIL_SESSION_PAGE_SIZE = 10;
 
+function getEnrollmentInitialGiftHours(record) {
+  if (!record) return 0;
+  if (record.enrollmentGiftHours !== undefined && record.enrollmentGiftHours !== null) {
+    return Number(record.enrollmentGiftHours || 0);
+  }
+  const renewalGiftHours = getStudentRenewalLogs(record).reduce((total, log) => {
+    return total + Number(log.giftHours || 0);
+  }, 0);
+  return Number(record.giftHoursTotal || 0) - renewalGiftHours;
+}
+
+function getEnrollmentInitialPackageHours(record) {
+  if (!record) return 0;
+  if (record.enrollmentPackageHours !== undefined && record.enrollmentPackageHours !== null) {
+    return Number(record.enrollmentPackageHours || 0);
+  }
+  return getPackageHours(
+    record.enrollmentPackageId || record.enrollmentPackageName || record.packageId || record.packageName || ""
+  );
+}
+
 function getStudentChangeLogs(record, type) {
   const logs = Array.isArray(record?.changeLogs) ? record.changeLogs : [];
   return type ? logs.filter((item) => item.changeType === type) : logs;
@@ -24,7 +45,7 @@ function getStudentPaymentLogs(record) {
     type: "\u62A5\u540D",
     packageName: record.enrollmentPackageName || record.packageName || "-",
     amount: Number(record.enrollmentPaidAmount ?? getPackagePrice(record.enrollmentPackageId || record.enrollmentPackageName || record.packageId || record.packageName || "")),
-    giftHours: Number(record.giftHoursTotal || 0),
+    giftHours: getEnrollmentInitialGiftHours(record),
     date: record.enrollmentPaidDate || record.enrollDate || "-"
   };
 
@@ -41,7 +62,19 @@ function getStudentPaymentLogs(record) {
 
 function getStudentAllSessions(record) {
   if (!record) return [];
-  const totalHours = getEnrollmentTotalHours(record);
+  const creditEvents = [
+    {
+      date: record.enrollmentPaidDate || record.enrollDate || "",
+      hours: getEnrollmentInitialPackageHours(record) + getEnrollmentInitialGiftHours(record)
+    },
+    ...getStudentRenewalLogs(record).map((log) => ({
+      date: log.date || "",
+      hours: Number(log.packageHours || 0) + Number(log.giftHours || 0)
+    }))
+  ]
+    .filter((item) => item.date)
+    .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+
   const chronologicalRecords = sessionRecords
     .filter((session) => {
       const students = Array.isArray(session.students) ? session.students : [];
@@ -49,19 +82,24 @@ function getStudentAllSessions(record) {
     })
     .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
 
-  let consumedHours = 0;
+  let balance = 0;
+  let creditIndex = 0;
   const mapped = chronologicalRecords.map((session) => {
+    while (creditIndex < creditEvents.length && String(creditEvents[creditIndex].date || "") <= String(session.date || "")) {
+      balance += Number(creditEvents[creditIndex].hours || 0);
+      creditIndex += 1;
+    }
     const students = Array.isArray(session.students) ? session.students : [];
     const matched = students.find((item) => Number(item.enrollmentId) === Number(record.id));
     const deductedHours = Number(matched?.deductedHours || 0);
-    consumedHours += deductedHours;
+    balance -= deductedHours;
     return {
       date: session.date || "",
       teacherName: session.teacherName || "",
       className: session.className || "",
       courseName: record.courseName || "",
       deductedHours,
-      remainingHours: totalHours - consumedHours
+      remainingHours: balance
     };
   });
 

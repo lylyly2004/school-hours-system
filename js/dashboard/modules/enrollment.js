@@ -196,8 +196,10 @@ function saveEnrollment() {
     paidHours: getPackageHours(selectedPackage?.id || refs.packageSelect.value, selectedPackage?.name || ""),
     enrollmentPackageId: selectedPackage?.id || "",
     enrollmentPackageName: selectedPackage?.name || "",
+    enrollmentPackageHours: getPackageHours(selectedPackage?.id || refs.packageSelect.value, selectedPackage?.name || ""),
     enrollmentPaidAmount: getPackagePrice(selectedPackage?.id || refs.packageSelect.value, selectedPackage?.name || ""),
     enrollmentPaidDate: refs.enrollDateInput.value,
+    enrollmentGiftHours: Number(refs.giftHoursInput.value || 0),
     giftHoursTotal: Number(refs.giftHoursInput.value || 0),
     packageNote: refs.packageNoteInput.value.trim(),
     remark: refs.remarkInput.value.trim()
@@ -218,8 +220,10 @@ function saveEnrollment() {
     payload.paidHours = Number(originalRecord.paidHours || 0);
     payload.enrollmentPackageId = originalRecord.enrollmentPackageId || originalRecord.packageId || payload.enrollmentPackageId;
     payload.enrollmentPackageName = originalRecord.enrollmentPackageName || originalRecord.packageName;
+    payload.enrollmentPackageHours = Number(originalRecord.enrollmentPackageHours ?? getPackageHours(originalRecord.enrollmentPackageId || originalRecord.enrollmentPackageName || originalRecord.packageId || originalRecord.packageName || ""));
     payload.enrollmentPaidAmount = Number(originalRecord.enrollmentPaidAmount ?? getPackagePrice(originalRecord.enrollmentPackageId || originalRecord.enrollmentPackageName || originalRecord.packageId || originalRecord.packageName || ""));
     payload.enrollmentPaidDate = originalRecord.enrollmentPaidDate || originalRecord.enrollDate;
+    payload.enrollmentGiftHours = Number(originalRecord.enrollmentGiftHours ?? originalRecord.giftHoursTotal ?? 0);
   }
 
   const selectedCourse = courses.find((item) => item.name === payload.courseName);
@@ -241,8 +245,10 @@ function saveEnrollment() {
           ...payload,
           enrollmentPackageId: isLocked ? payload.enrollmentPackageId : payload.packageId,
           enrollmentPackageName: isLocked ? payload.enrollmentPackageName : payload.packageName,
+          enrollmentPackageHours: isLocked ? payload.enrollmentPackageHours : getPackageHours(payload.packageId || payload.packageName || ""),
           enrollmentPaidAmount: isLocked ? payload.enrollmentPaidAmount : getPackagePrice(payload.packageId || payload.packageName || ""),
-          enrollmentPaidDate: isLocked ? payload.enrollmentPaidDate : payload.enrollDate
+          enrollmentPaidDate: isLocked ? payload.enrollmentPaidDate : payload.enrollDate,
+          enrollmentGiftHours: isLocked ? payload.enrollmentGiftHours : Number(payload.giftHoursTotal || 0)
         }
         : record
     ));
