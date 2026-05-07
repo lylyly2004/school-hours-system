@@ -569,7 +569,7 @@ function getEnrollmentRemainingHours(record) {
   if (!record) return 0;
   if ((record.studentStatus || "active") === "refunded") return 0;
   const remaining = getEnrollmentTotalHours(record) - getEnrollmentUsedHours(record);
-  return remaining > 0 ? remaining : 0;
+  return remaining;
 }
 
 function getTeacherMonthlyHours(teacherName) {

@@ -61,7 +61,7 @@ function getStudentAllSessions(record) {
       className: session.className || "",
       courseName: record.courseName || "",
       deductedHours,
-      remainingHours: Math.max(0, totalHours - consumedHours)
+      remainingHours: totalHours - consumedHours
     };
   });
 

@@ -8,16 +8,14 @@ function getSessionSelectableStudents(teacherName = selectedSessionTeacherName, 
   return enrollmentRecords.filter((record) => {
     return isStudentActive(record)
       && record.teacherName === teacherName
-      && record.className === className
-      && getEnrollmentRemainingHours(record) > 0;
+      && record.className === className;
   });
 }
 
 function getTeacherSessionStudentCount(teacherName) {
   return enrollmentRecords.filter((record) => {
     return isStudentActive(record)
-      && record.teacherName === teacherName
-      && getEnrollmentRemainingHours(record) > 0;
+      && record.teacherName === teacherName;
   }).length;
 }
 
@@ -26,8 +24,7 @@ function getTeacherAvailableClasses(teacherName) {
     enrollmentRecords
       .filter((record) => {
         return isStudentActive(record)
-          && record.teacherName === teacherName
-          && getEnrollmentRemainingHours(record) > 0;
+          && record.teacherName === teacherName;
       })
       .map((record) => record.className)
       .filter(Boolean)
