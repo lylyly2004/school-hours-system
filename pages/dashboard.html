@@ -12,10 +12,9 @@
   <section class="dashboard">
     <aside class="sidebar">
       <div class="brand-block">
-        <div class="brand-mark">艺</div>
+        <div class="brand-mark">时</div>
         <div>
           <h2>课时管理系统</h2>
-          <p>School Admin</p>
         </div>
       </div>
 
@@ -73,6 +72,18 @@
           <button class="secondary-btn" type="button" id="importDataBtn">导入数据</button>
           <button class="secondary-btn" type="button" id="bindDataFileBtn">绑定数据文件</button>
           <button class="secondary-btn" type="button" id="syncDataFileBtn">从文件同步</button>
+          <button class="secondary-btn" type="button" id="usageGuideBtn">使用说明</button>
+          <div class="top-tools-cluster">
+            <details class="top-tools-menu">
+              <summary class="secondary-btn" id="dataToolsToggle">数据工具</summary>
+              <div class="top-tools-dropdown">
+                <button class="secondary-btn" type="button" id="dataToolsExportBtn">导出数据</button>
+                <button class="secondary-btn" type="button" id="dataToolsImportBtn">导入数据</button>
+                <button class="secondary-btn" type="button" id="dataToolsBindBtn">绑定数据文件</button>
+                <button class="secondary-btn" type="button" id="dataToolsSyncBtn">从文件同步</button>
+              </div>
+            </details>
+          </div>
           <input class="hidden" type="file" id="importDataInput" accept=".json,application/json">
           <span class="data-file-status" id="dataFileStatus">未绑定数据文件</span>
           <button class="ghost-btn" type="button" id="logoutBtn">退出登录</button>
@@ -145,6 +156,11 @@
                   </thead>
                   <tbody id="studentTableBody"></tbody>
                 </table>
+              </div>
+              <div class="table-pagination">
+                <button class="secondary-btn" type="button" id="studentPrevPageBtn">上一页</button>
+                <span class="pagination-info" id="studentPageInfo">第 1 / 1 页</span>
+                <button class="secondary-btn" type="button" id="studentNextPageBtn">下一页</button>
               </div>
             </article>
           </div>
@@ -264,6 +280,11 @@
                   <tbody id="enrollmentTableBody"></tbody>
                 </table>
               </div>
+              <div class="table-pagination">
+                <button class="secondary-btn" type="button" id="enrollmentPrevPageBtn">上一页</button>
+                <span class="pagination-info" id="enrollmentPageInfo">第 1 / 1 页</span>
+                <button class="secondary-btn" type="button" id="enrollmentNextPageBtn">下一页</button>
+              </div>
             </div>
 
             <div class="business-panel" id="business-retail">
@@ -291,6 +312,11 @@
                   <tbody id="retailTableBody"></tbody>
                 </table>
               </div>
+              <div class="table-pagination">
+                <button class="secondary-btn" type="button" id="retailPrevPageBtn">上一页</button>
+                <span class="pagination-info" id="retailPageInfo">第 1 / 1 页</span>
+                <button class="secondary-btn" type="button" id="retailNextPageBtn">下一页</button>
+              </div>
             </div>
 
             <div class="business-panel" id="business-birthday">
@@ -313,6 +339,11 @@
                   </thead>
                   <tbody id="birthdayTableBody"></tbody>
                 </table>
+              </div>
+              <div class="table-pagination">
+                <button class="secondary-btn" type="button" id="birthdayPrevPageBtn">上一页</button>
+                <span class="pagination-info" id="birthdayPageInfo">第 1 / 1 页</span>
+                <button class="secondary-btn" type="button" id="birthdayNextPageBtn">下一页</button>
               </div>
             </div>
 
@@ -352,6 +383,11 @@
                   </thead>
                   <tbody id="todayTableBody"></tbody>
                 </table>
+              </div>
+              <div class="table-pagination">
+                <button class="secondary-btn" type="button" id="todayPrevPageBtn">上一页</button>
+                <span class="pagination-info" id="todayPageInfo">第 1 / 1 页</span>
+                <button class="secondary-btn" type="button" id="todayNextPageBtn">下一页</button>
               </div>
             </div>
           </article>
@@ -461,6 +497,11 @@
                 <tbody id="classTableBody"></tbody>
               </table>
             </div>
+            <div class="table-pagination">
+              <button class="secondary-btn" type="button" id="classPrevPageBtn">上一页</button>
+              <span class="pagination-info" id="classPageInfo">第 1 / 1 页</span>
+              <button class="secondary-btn" type="button" id="classNextPageBtn">下一页</button>
+            </div>
           </article>
         </section>
 
@@ -500,6 +541,13 @@
               <div class="form-field">
                 <label>上课日期</label>
                 <input type="date" id="sessionLessonDateInput">
+              </div>
+              <div class="form-field">
+                <label>搜索学员姓名</label>
+                <label class="search-box">
+                  <input type="search" id="sessionStudentSearch" placeholder="输入学员姓名" autocomplete="off">
+                  <span>搜索</span>
+                </label>
               </div>
             </div>
             <div class="session-class-toolbar">
@@ -958,6 +1006,47 @@
         <div class="enrollment-actions top-space">
         <button class="primary-btn" type="button" id="saveManagementEditorBtn">保存</button>
         <button class="secondary-btn" type="button" id="cancelManagementEditorBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="usageGuideModal">
+    <div class="modal-mask" id="usageGuideMask"></div>
+    <div class="modal-card guide-modal-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="usageGuideTitle">系统使用说明</h3>
+        </div>
+        <button class="close-btn" type="button" id="closeUsageGuideBtn">关闭</button>
+      </div>
+      <div class="guide-sections">
+        <section class="guide-section">
+          <h4>首次使用</h4>
+          <ul>
+            <li>建议先创建校区、学科、教师、班级和收费模式。</li>
+            <li>首次使用前先点一次“绑定数据文件”，绑定固定的本地数据文件。</li>
+            <li>之后再开始录入真实的报名、上课、续费和退费数据。</li>
+          </ul>
+        </section>
+        <section class="guide-section">
+          <h4>日常备份</h4>
+          <ul>
+            <li>系统会自动保存，但建议定期点“导出数据”手动备份。</li>
+            <li>如果当天录入了很多重要数据，建议结束前再导出一次。</li>
+            <li>换电脑时，把导出的 JSON 文件复制到新电脑再导入即可。</li>
+          </ul>
+        </section>
+        <section class="guide-section">
+          <h4>导入与恢复</h4>
+          <ul>
+            <li>点“导入数据”可恢复之前导出的完整数据。</li>
+            <li>点“从文件同步”可从当前绑定的数据文件重新拉回数据。</li>
+            <li>如果页面数据异常，先不要继续录入，优先尝试同步或导入备份。</li>
+          </ul>
+        </section>
+      </div>
+      <div class="enrollment-actions">
+        <button class="primary-btn" type="button" id="confirmUsageGuideBtn">我知道了</button>
       </div>
     </div>
   </div>

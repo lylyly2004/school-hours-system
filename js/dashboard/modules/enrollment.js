@@ -1,3 +1,8 @@
+const ENROLLMENT_PAGE_SIZE = 10;
+let currentEnrollmentPage = 1;
+const BIRTHDAY_PAGE_SIZE = 10;
+let currentBirthdayPage = 1;
+
 function getEnrollmentHistoryCount(recordId) {
   if (!recordId) return 0;
   return sessionRecords.reduce((count, session) => {
@@ -112,10 +117,41 @@ function syncEnrollmentToToday(record, type = "\u65b0\u751f\u62a5\u540d") {
   });
 }
 
+function setEnrollmentPage(nextPage) {
+  currentEnrollmentPage = Math.max(1, Number(nextPage) || 1);
+}
+
+function renderEnrollmentPagination(totalRecords) {
+  const totalPages = Math.max(1, Math.ceil(totalRecords / ENROLLMENT_PAGE_SIZE));
+  const safePage = Math.min(Math.max(currentEnrollmentPage, 1), totalPages);
+  currentEnrollmentPage = safePage;
+
+  if (refs.enrollmentPageInfo) {
+    refs.enrollmentPageInfo.textContent = `第 ${safePage} / ${totalPages} 页`;
+  }
+  if (refs.enrollmentPrevPageBtn) {
+    refs.enrollmentPrevPageBtn.disabled = safePage <= 1;
+  }
+  if (refs.enrollmentNextPageBtn) {
+    refs.enrollmentNextPageBtn.disabled = safePage >= totalPages;
+  }
+
+  return safePage;
+}
+
 function renderEnrollmentRecords() {
   refs.enrollmentCount.textContent = `${enrollmentRecords.length} \u6761\u8bb0\u5f55`;
+  const safePage = renderEnrollmentPagination(enrollmentRecords.length);
 
-  refs.enrollmentTableBody.innerHTML = enrollmentRecords.map((record) => `
+  if (enrollmentRecords.length === 0) {
+    refs.enrollmentTableBody.innerHTML = `<tr><td colspan="9">\u5F53\u524D\u6682\u65E0\u62A5\u540D\u8BB0\u5F55</td></tr>`;
+    return;
+  }
+
+  const startIndex = (safePage - 1) * ENROLLMENT_PAGE_SIZE;
+  const pagedRecords = enrollmentRecords.slice(startIndex, startIndex + ENROLLMENT_PAGE_SIZE);
+
+  refs.enrollmentTableBody.innerHTML = pagedRecords.map((record) => `
     <tr>
       <td>${record.enrollDate || "-"}</td>
       <td>${record.studentName || "-"}</td>
@@ -268,6 +304,7 @@ function saveEnrollment() {
     syncEnrollmentTransaction(newRecord);
   }
 
+  setEnrollmentPage(1);
   resetEnrollmentForm();
   refreshEnrollmentLinkedViews();
   showToast(isEditing ? "\u62a5\u540d\u8bb0\u5f55\u5df2\u66f4\u65b0\uff0c\u5b66\u5458\u6863\u6848\u5df2\u540c\u6b65" : "\u65b0\u751f\u62a5\u540d\u5df2\u63d0\u4ea4\uff0c\u5b66\u5458\u6863\u6848\u5df2\u540c\u6b65");
@@ -296,19 +333,39 @@ function formatBirthdayLabel(birthValue) {
   return `${birthDate.getMonth() + 1}\u6708${birthDate.getDate()}\u65e5`;
 }
 
+function setBirthdayPage(nextPage) {
+  currentBirthdayPage = Math.max(1, Number(nextPage) || 1);
+}
+
+function renderBirthdayPagination(totalRecords) {
+  const totalPages = Math.max(1, Math.ceil(totalRecords / BIRTHDAY_PAGE_SIZE));
+  const safePage = Math.min(Math.max(currentBirthdayPage, 1), totalPages);
+  currentBirthdayPage = safePage;
+
+  refs.birthdayPageInfo.textContent = `第 ${safePage} / ${totalPages} 页`;
+  refs.birthdayPrevPageBtn.disabled = safePage <= 1;
+  refs.birthdayNextPageBtn.disabled = safePage >= totalPages;
+
+  return safePage;
+}
+
 function renderBirthdayRecords() {
   const records = enrollmentRecords
     .filter((record) => isStudentActive(record))
     .map((record) => ({ ...record, diffDays: getUpcomingBirthdayInfo(record.birthMonth) }))
     .filter((record) => record.diffDays !== null)
     .sort((a, b) => a.diffDays - b.diffDays);
+  const safePage = renderBirthdayPagination(records.length);
 
   if (records.length === 0) {
     refs.birthdayTableBody.innerHTML = `<tr><td colspan="5">\u5f53\u524d\u6ca1\u6709\u672a\u6765 7 \u5929\u5185\u8fc7\u751f\u65e5\u7684\u5b66\u5458\u3002</td></tr>`;
     return;
   }
 
-  refs.birthdayTableBody.innerHTML = records.map((record) => `
+  const startIndex = (safePage - 1) * BIRTHDAY_PAGE_SIZE;
+  const pagedRecords = records.slice(startIndex, startIndex + BIRTHDAY_PAGE_SIZE);
+
+  refs.birthdayTableBody.innerHTML = pagedRecords.map((record) => `
     <tr>
       <td>${record.studentName}</td>
       <td>${formatBirthdayLabel(record.birthMonth)}${record.diffDays === 0 ? "\uff08\u4eca\u5929\uff09" : `\uff08${record.diffDays} \u5929\u540e\uff09`}</td>

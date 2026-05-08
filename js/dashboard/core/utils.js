@@ -711,10 +711,14 @@ function normalizeSharedData() {
 
 function closeModal(modal) {
   modal?.classList.add("hidden");
+  if (!document.querySelector(".modal:not(.hidden)")) {
+    document.body.classList.remove("modal-open");
+  }
 }
 
 function openModal(modal) {
   modal?.classList.remove("hidden");
+  document.body.classList.add("modal-open");
 }
 
 function confirmDelete(label) {

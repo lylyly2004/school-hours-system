@@ -5,11 +5,23 @@ let shouldAutoSelectSessionStudents = true;
 
 function getSessionSelectableStudents(teacherName = selectedSessionTeacherName, className = selectedSessionClassName) {
   if (!teacherName || !className) return [];
-  return enrollmentRecords.filter((record) => {
-    return isStudentActive(record)
-      && record.teacherName === teacherName
-      && record.className === className;
-  });
+  return enrollmentRecords
+    .filter((record) => {
+      return isStudentActive(record)
+        && record.teacherName === teacherName
+        && record.className === className;
+    })
+    .sort((a, b) => String(a.studentName || "").localeCompare(
+      String(b.studentName || ""),
+      "zh-CN-u-co-pinyin"
+    ));
+}
+
+function getVisibleSessionStudents() {
+  const allCandidates = getSessionSelectableStudents();
+  const keyword = String(refs.sessionStudentSearch?.value || "").trim();
+  if (!keyword) return allCandidates;
+  return allCandidates.filter((record) => String(record.studentName || "").includes(keyword));
 }
 
 function getTeacherSessionStudentCount(teacherName) {
@@ -149,22 +161,25 @@ function renderSessionClassTabs() {
 }
 
 function renderSessionStudents() {
-  const candidates = getSessionSelectableStudents();
-  const candidateIds = candidates.map((record) => Number(record.id));
-  selectedSessionStudentIds = selectedSessionStudentIds.filter((id) => candidateIds.includes(Number(id)));
+  const allCandidates = getSessionSelectableStudents();
+  const allCandidateIds = allCandidates.map((record) => Number(record.id));
+  selectedSessionStudentIds = selectedSessionStudentIds.filter((id) => allCandidateIds.includes(Number(id)));
 
-  if (shouldAutoSelectSessionStudents && candidates.length > 0 && selectedSessionStudentIds.length === 0) {
-    selectedSessionStudentIds = [...candidateIds];
+  if (shouldAutoSelectSessionStudents && allCandidates.length > 0 && selectedSessionStudentIds.length === 0) {
+    selectedSessionStudentIds = [...allCandidateIds];
     shouldAutoSelectSessionStudents = false;
   }
 
+  const candidates = getVisibleSessionStudents();
+
   if (candidates.length === 0) {
-    refs.sessionStudentList.innerHTML = `<p class="session-empty-note">\u5f53\u524d\u6559\u5e08\u6216\u73ed\u7ea7\u4e0b\u6682\u65e0\u53ef\u8bb0\u5f55\u8bfe\u65f6\u7684\u5728\u8bfb\u5b66\u5458\u3002</p>`;
-    refs.sessionPendingStudentCount.textContent = "0 / 0";
+    const hasKeyword = String(refs.sessionStudentSearch?.value || "").trim().length > 0;
+    refs.sessionStudentList.innerHTML = `<p class="session-empty-note">${hasKeyword ? "\u672A\u627E\u5230\u5339\u914D\u7684\u5B66\u5458" : "\u5F53\u524D\u6559\u5E08\u6216\u73ED\u7EA7\u4E0B\u6682\u65E0\u53EF\u8BB0\u5F55\u8BFE\u65F6\u7684\u5728\u8BFB\u5B66\u5458\u3002"}</p>`;
+    refs.sessionPendingStudentCount.textContent = `${selectedSessionStudentIds.length} / ${allCandidates.length}`;
     return;
   }
 
-  refs.sessionPendingStudentCount.textContent = `${selectedSessionStudentIds.length} / ${candidates.length}`;
+  refs.sessionPendingStudentCount.textContent = `${selectedSessionStudentIds.length} / ${allCandidates.length}`;
   refs.sessionStudentList.innerHTML = candidates.map((record) => `
     <article class="session-student-card">
       <label class="session-student-toggle">
@@ -338,7 +353,7 @@ function saveSessionRecord() {
   const lessonDate = refs.sessionLessonDateInput?.value || "";
 
   if (!lessonDate || !selectedSessionTeacherName || !selectedSessionClassName || validSelectedIds.length === 0) {
-    showToast("\u8bf7\u5148\u9009\u62e9\u4E0A\u8BFE\u65E5\u671F\u3001\u6559\u5E08\u3001\u73ED\u7EA7\u5E76\u52FE\u9009\u5B66\u5458\u3002");
+    showToast("\u8BF7\u5148\u9009\u62E9\u4E0A\u8BFE\u65E5\u671F\u3001\u6559\u5E08\u3001\u73ED\u7EA7\u5E76\u52FE\u9009\u5B66\u5458");
     return;
   }
 
@@ -360,7 +375,7 @@ function saveSessionRecord() {
   renderTeachers();
   renderStudents(refs.studentSearch.value || "");
   renderRenewalList();
-  showToast(`${lessonDate} ${selectedSessionTeacherName} / ${selectedSessionClassName} \u5df2\u8bb0\u5f55 ${validSelectedIds.length} \u4f4d\u5b66\u5458\u4e0a\u8bfe\u3002`);
+  showToast(`${lessonDate} ${selectedSessionTeacherName} / ${selectedSessionClassName} \u5DF2\u8BB0\u5F55 ${validSelectedIds.length} \u4F4D\u5B66\u5458\u4E0A\u8BFE`);
 }
 
 function deleteSessionRecord(sessionId) {
@@ -369,5 +384,5 @@ function deleteSessionRecord(sessionId) {
   renderTeachers();
   renderStudents(refs.studentSearch.value || "");
   renderRenewalList();
-  showToast("\u4e0a\u8bfe\u8bb0\u5f55\u5df2\u5220\u9664\uff0c\u5bf9\u5e94\u8bfe\u65f6\u5df2\u81ea\u52a8\u6062\u590d\u3002");
+  showToast("\u4E0A\u8BFE\u8BB0\u5F55\u5DF2\u5220\u9664\uFF0C\u5BF9\u5E94\u8BFE\u65F6\u5DF2\u81EA\u52A8\u6062\u590D");
 }

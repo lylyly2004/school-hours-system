@@ -1,3 +1,6 @@
+const RETAIL_PAGE_SIZE = 10;
+let currentRetailPage = 1;
+
 function resetRetailForm() {
   editingRetailId = null;
   refs.retailFormTitle.textContent = "新增零售";
@@ -100,6 +103,7 @@ function saveRetail() {
   }
 
   syncRetailTransaction(payload);
+  currentRetailPage = 1;
   closeModal(refs.retailModal);
   renderRetailRecords();
   renderTransactions();
@@ -107,12 +111,33 @@ function saveRetail() {
   showToast(isEditing ? "零售记录已更新，并已同步流水" : "零售记录已保存，并已同步到流水");
 }
 
+function setRetailPage(nextPage) {
+  currentRetailPage = Math.max(1, Number(nextPage) || 1);
+}
+
+function renderRetailPagination(totalRecords) {
+  const totalPages = Math.max(1, Math.ceil(totalRecords / RETAIL_PAGE_SIZE));
+  const safePage = Math.min(Math.max(currentRetailPage, 1), totalPages);
+  currentRetailPage = safePage;
+
+  refs.retailPageInfo.textContent = `第 ${safePage} / ${totalPages} 页`;
+  refs.retailPrevPageBtn.disabled = safePage <= 1;
+  refs.retailNextPageBtn.disabled = safePage >= totalPages;
+
+  return safePage;
+}
+
 function renderRetailRecords() {
+  const safePage = renderRetailPagination(retailRecords.length);
+
   if (retailRecords.length === 0) {
     refs.retailTableBody.innerHTML = `<tr><td colspan="8">当前还没有零售记录。</td></tr>`;
     return;
   }
-  refs.retailTableBody.innerHTML = retailRecords.map((record) => `
+  const startIndex = (safePage - 1) * RETAIL_PAGE_SIZE;
+  const pagedRecords = retailRecords.slice(startIndex, startIndex + RETAIL_PAGE_SIZE);
+
+  refs.retailTableBody.innerHTML = pagedRecords.map((record) => `
     <tr>
       <td>${record.date}</td>
       <td>${record.itemName}</td>
@@ -140,4 +165,3 @@ function renderRetailRecords() {
     </tr>
   `).join("");
 }
-

@@ -1,4 +1,8 @@
 function bindEvents() {
+  const closeDataToolsMenu = () => {
+    refs.dataToolsToggle?.closest(".top-tools-menu")?.removeAttribute("open");
+  };
+
   refs.menuParents.forEach((button) => {
     button.addEventListener("click", () => {
       const group = button.dataset.parent;
@@ -17,6 +21,7 @@ function bindEvents() {
   });
 
   refs.studentSearch.addEventListener("input", () => {
+    setStudentListPage(1);
     renderStudents(refs.studentSearch.value || "");
   });
 
@@ -33,6 +38,23 @@ function bindEvents() {
   refs.syncDataFileBtn?.addEventListener("click", () => {
     void syncFromBoundDataFile(true);
   });
+  refs.dataToolsExportBtn?.addEventListener("click", () => {
+    refs.exportDataBtn?.click();
+    closeDataToolsMenu();
+  });
+  refs.dataToolsImportBtn?.addEventListener("click", () => {
+    refs.importDataBtn?.click();
+    closeDataToolsMenu();
+  });
+  refs.dataToolsBindBtn?.addEventListener("click", () => {
+    refs.bindDataFileBtn?.click();
+    closeDataToolsMenu();
+  });
+  refs.dataToolsSyncBtn?.addEventListener("click", () => {
+    refs.syncDataFileBtn?.click();
+    closeDataToolsMenu();
+  });
+  refs.usageGuideBtn?.addEventListener("click", () => openModal(refs.usageGuideModal));
   refs.exportDataBtn.addEventListener("click", exportAppData);
   refs.importDataBtn.addEventListener("click", () => {
     refs.importDataInput.value = "";
@@ -46,6 +68,14 @@ function bindEvents() {
       return;
     }
     importAppDataFromFile(file);
+  });
+  refs.closeUsageGuideBtn?.addEventListener("click", () => closeModal(refs.usageGuideModal));
+  refs.confirmUsageGuideBtn?.addEventListener("click", () => closeModal(refs.usageGuideModal));
+  document.addEventListener("click", (event) => {
+    const menu = refs.dataToolsToggle?.closest(".top-tools-menu");
+    if (!menu?.hasAttribute("open")) return;
+    if (menu.contains(event.target)) return;
+    closeDataToolsMenu();
   });
   refs.logoutBtn.addEventListener("click", () => {
     sessionStorage.removeItem("school-admin-auth");
@@ -66,7 +96,16 @@ function bindEvents() {
   refs.addClassTypeBtn.addEventListener("click", () => openManagementEditor("class-type-create"));
   refs.addClassBtn.addEventListener("click", addClass);
   refs.classSearch?.addEventListener("input", () => {
+    setClassListPage(1);
     renderClasses(refs.classSearch.value || "");
+  });
+  refs.classPrevPageBtn?.addEventListener("click", () => {
+    setClassListPage(currentClassListPage - 1);
+    renderClasses(refs.classSearch?.value || "");
+  });
+  refs.classNextPageBtn?.addEventListener("click", () => {
+    setClassListPage(currentClassListPage + 1);
+    renderClasses(refs.classSearch?.value || "");
   });
 
   refs.saveManagementEditorBtn.addEventListener("click", saveManagementEditor);
@@ -84,6 +123,14 @@ function bindEvents() {
 
   refs.saveEnrollmentBtn.addEventListener("click", saveEnrollment);
   refs.resetEnrollmentBtn.addEventListener("click", resetEnrollmentForm);
+  refs.enrollmentPrevPageBtn?.addEventListener("click", () => {
+    setEnrollmentPage(currentEnrollmentPage - 1);
+    renderEnrollmentRecords();
+  });
+  refs.enrollmentNextPageBtn?.addEventListener("click", () => {
+    setEnrollmentPage(currentEnrollmentPage + 1);
+    renderEnrollmentRecords();
+  });
 
   refs.addRetailBtn.addEventListener("click", () => openRetailModal());
   refs.closeRetailModalBtn.addEventListener("click", () => closeModal(refs.retailModal));
@@ -95,11 +142,40 @@ function bindEvents() {
   refs.retailUnitPriceInput.addEventListener("input", () => {
     refs.retailAmountInput.value = String(Number(refs.retailQuantityInput.value || 0) * Number(refs.retailUnitPriceInput.value || 0));
   });
+  refs.retailPrevPageBtn?.addEventListener("click", () => {
+    setRetailPage(currentRetailPage - 1);
+    renderRetailRecords();
+  });
+  refs.retailNextPageBtn?.addEventListener("click", () => {
+    setRetailPage(currentRetailPage + 1);
+    renderRetailRecords();
+  });
+  refs.birthdayPrevPageBtn?.addEventListener("click", () => {
+    setBirthdayPage(currentBirthdayPage - 1);
+    renderBirthdayRecords();
+  });
+  refs.birthdayNextPageBtn?.addEventListener("click", () => {
+    setBirthdayPage(currentBirthdayPage + 1);
+    renderBirthdayRecords();
+  });
 
-  refs.filterTodayBtn.addEventListener("click", renderTodayRecords);
+  refs.filterTodayBtn.addEventListener("click", () => {
+    setTodayPage(1);
+    renderTodayRecords();
+  });
   refs.resetTodayBtn.addEventListener("click", () => {
     refs.todayDateFilter.value = "";
+    setTodayPage(1);
     refs.todayCourseFilter.value = "鍏ㄩ儴璇剧▼";
+    renderTodayRecords();
+  });
+
+  refs.todayPrevPageBtn?.addEventListener("click", () => {
+    setTodayPage(currentTodayPage - 1);
+    renderTodayRecords();
+  });
+  refs.todayNextPageBtn?.addEventListener("click", () => {
+    setTodayPage(currentTodayPage + 1);
     renderTodayRecords();
   });
 
@@ -176,11 +252,23 @@ function bindEvents() {
       refs.sessionLessonDateInput.showPicker();
     }
   });
+  refs.sessionStudentSearch?.addEventListener("input", () => {
+    renderSessionStudents();
+  });
 
   refs.studentStatusFilters.addEventListener("click", (event) => {
     const target = event.target.closest("[data-student-filter]");
     if (!target) return;
     studentStatusFilter = target.dataset.studentFilter;
+    setStudentListPage(1);
+    renderStudents(refs.studentSearch.value || "");
+  });
+  refs.studentPrevPageBtn.addEventListener("click", () => {
+    setStudentListPage(currentStudentListPage - 1);
+    renderStudents(refs.studentSearch.value || "");
+  });
+  refs.studentNextPageBtn.addEventListener("click", () => {
+    setStudentListPage(currentStudentListPage + 1);
     renderStudents(refs.studentSearch.value || "");
   });
 
@@ -429,12 +517,40 @@ function bindEvents() {
   });
 }
 
+function applySystemShellCopy() {
+  document.title = "学校学员课时管理系统";
+
+  const brandTitle = document.querySelector(".brand-block h2");
+  const brandSubTitle = document.querySelector(".brand-block p");
+  const brandMark = document.querySelector(".brand-mark");
+  const logoutBtn = refs.logoutBtn;
+  const exportBtn = refs.exportDataBtn;
+  const importBtn = refs.importDataBtn;
+  const bindBtn = refs.bindDataFileBtn;
+  const syncBtn = refs.syncDataFileBtn;
+  const status = refs.dataFileStatus;
+
+  if (brandTitle) brandTitle.textContent = "课时管理系统";
+  if (brandSubTitle) {
+    brandSubTitle.textContent = "";
+    brandSubTitle.style.display = "none";
+  }
+  if (brandMark) brandMark.textContent = "时";
+  if (logoutBtn) logoutBtn.textContent = "退出登录";
+  if (exportBtn) exportBtn.textContent = "导出数据";
+  if (importBtn) importBtn.textContent = "导入数据";
+  if (bindBtn) bindBtn.textContent = "绑定数据文件";
+  if (syncBtn) syncBtn.textContent = "从文件同步";
+  if (status && !status.textContent.trim()) status.textContent = "未绑定数据文件";
+}
+
 async function init() {
   const hasLocalData = loadPersistedData();
   if (!hasLocalData) {
     await syncFromBoundDataFile(false);
   }
   normalizeSharedData();
+  applySystemShellCopy();
   populateRetailBaseOptions();
   populateCampusOptions(campusOptions.find((item) => item !== "鍏ㄩ儴鏍″尯") || "");
   populateTeacherOptions(teachers[0]?.name || "");
@@ -452,6 +568,9 @@ async function init() {
   renderClasses();
   renderEnrollmentRecords();
   renderBirthdayRecords();
+  refs.todayDateFilter.value = getTodayString();
+  refs.todayCourseFilter.value = "鍏ㄩ儴璇剧▼";
+  setTodayPage(1);
   renderTodayRecords();
   renderRetailRecords();
   renderStudents("");
@@ -460,8 +579,6 @@ async function init() {
   renderChargePackages();
   renderTransactions();
   renderSessionTeacherPicker();
-  refs.todayDateFilter.value = getTodayString();
-  refs.todayCourseFilter.value = "鍏ㄩ儴璇剧▼";
   updateHeader();
   bindEvents();
   void refreshDataFileStatus();

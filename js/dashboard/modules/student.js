@@ -1,7 +1,9 @@
 let currentStudentDetailId = null;
 let currentStudentDetailPage = 1;
 let currentStudentDetailSection = "session";
+let currentStudentListPage = 1;
 const STUDENT_DETAIL_SESSION_PAGE_SIZE = 10;
+const STUDENT_LIST_PAGE_SIZE = 10;
 
 function getEnrollmentInitialGiftHours(record) {
   if (!record) return 0;
@@ -130,6 +132,20 @@ function renderStudentStatusFilters() {
     <button class="secondary-btn ${studentStatusFilter === "paused" ? "active" : ""}" type="button" data-student-filter="paused">\u505C\u8BFE\u5B66\u5458</button>
     <button class="secondary-btn ${studentStatusFilter === "refunded" ? "active" : ""}" type="button" data-student-filter="refunded">\u9000\u8D39\u5B66\u5458</button>
   `;
+}
+
+function setStudentListPage(nextPage) {
+  currentStudentListPage = Math.max(1, Number(nextPage) || 1);
+}
+
+function renderStudentListPagination(totalCount) {
+  const totalPages = Math.max(1, Math.ceil(totalCount / STUDENT_LIST_PAGE_SIZE));
+  const safePage = Math.min(Math.max(currentStudentListPage, 1), totalPages);
+  currentStudentListPage = safePage;
+  refs.studentPageInfo.textContent = `第 ${safePage} / ${totalPages} 页`;
+  refs.studentPrevPageBtn.disabled = safePage <= 1;
+  refs.studentNextPageBtn.disabled = safePage >= totalPages;
+  return safePage;
 }
 
 function ensureStudentDetailView() {
@@ -548,6 +564,7 @@ function renderStudents(keyword = "") {
   refs.studentBirthdayCount.textContent = String(birthdayCount);
   refs.resultCount.textContent = `${filtered.length} \u4F4D\u5B66\u5458`;
   renderStudentStatusFilters();
+  const safePage = renderStudentListPagination(filtered.length);
 
   if (filtered.length === 0) {
     refs.studentTableBody.innerHTML = `<tr><td colspan="9">\u5F53\u524D\u6CA1\u6709\u5339\u914D\u7684\u5B66\u5458\u6863\u6848</td></tr>`;
@@ -557,7 +574,10 @@ function renderStudents(keyword = "") {
     return;
   }
 
-  refs.studentTableBody.innerHTML = filtered.map((record) => {
+  const start = (safePage - 1) * STUDENT_LIST_PAGE_SIZE;
+  const pagedRecords = filtered.slice(start, start + STUDENT_LIST_PAGE_SIZE);
+
+  refs.studentTableBody.innerHTML = pagedRecords.map((record) => {
     const totalHours = getEnrollmentTotalHours(record);
     const remaining = getEnrollmentRemainingHours(record);
     const statusMeta = getStudentStatusMeta(record);

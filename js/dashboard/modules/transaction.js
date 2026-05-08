@@ -1,5 +1,7 @@
 const TRANSACTION_PAGE_SIZE = 10;
 let currentTransactionPage = 1;
+const TODAY_PAGE_SIZE = 10;
+let currentTodayPage = 1;
 
 function getCampusChoices() {
   return campusOptions.filter((item) => item !== "\u5168\u90E8\u6821\u533A");
@@ -360,15 +362,35 @@ function renderTransactions() {
   `).join("");
 }
 
+function setTodayPage(nextPage) {
+  currentTodayPage = Math.max(1, Number(nextPage) || 1);
+}
+
+function renderTodayPagination(totalRecords) {
+  const totalPages = Math.max(1, Math.ceil(totalRecords / TODAY_PAGE_SIZE));
+  const safePage = Math.min(Math.max(currentTodayPage, 1), totalPages);
+  currentTodayPage = safePage;
+
+  refs.todayPageInfo.textContent = `第 ${safePage} / ${totalPages} 页`;
+  refs.todayPrevPageBtn.disabled = safePage <= 1;
+  refs.todayNextPageBtn.disabled = safePage >= totalPages;
+
+  return safePage;
+}
+
 function renderTodayRecords() {
   const filtered = getFilteredTodayRecords();
+  const safePage = renderTodayPagination(filtered.length);
 
   if (filtered.length === 0) {
     refs.todayTableBody.innerHTML = `<tr><td colspan="6">\u5F53\u524D\u6CA1\u6709\u5339\u914D\u7684\u529E\u7406\u8BB0\u5F55</td></tr>`;
     return;
   }
 
-  refs.todayTableBody.innerHTML = filtered.map((record) => `
+  const startIndex = (safePage - 1) * TODAY_PAGE_SIZE;
+  const pagedRecords = filtered.slice(startIndex, startIndex + TODAY_PAGE_SIZE);
+
+  refs.todayTableBody.innerHTML = pagedRecords.map((record) => `
     <tr>
       <td>${record.date}</td>
       <td>${record.time}</td>

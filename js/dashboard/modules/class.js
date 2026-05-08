@@ -1,3 +1,6 @@
+let currentClassListPage = 1;
+const CLASS_LIST_PAGE_SIZE = 10;
+
 function getFilteredClasses(keyword = "") {
   const normalized = String(keyword || "").trim();
   if (!normalized) return classes;
@@ -62,15 +65,41 @@ function getClassDetailHtml(item) {
   `;
 }
 
+function setClassListPage(nextPage) {
+  currentClassListPage = Math.max(1, Number(nextPage) || 1);
+}
+
+function renderClassListPagination(totalCount) {
+  const totalPages = Math.max(1, Math.ceil(totalCount / CLASS_LIST_PAGE_SIZE));
+  const safePage = Math.min(Math.max(currentClassListPage, 1), totalPages);
+  currentClassListPage = safePage;
+
+  if (refs.classPageInfo) {
+    refs.classPageInfo.textContent = `第 ${safePage} / ${totalPages} 页`;
+  }
+  if (refs.classPrevPageBtn) {
+    refs.classPrevPageBtn.disabled = safePage <= 1;
+  }
+  if (refs.classNextPageBtn) {
+    refs.classNextPageBtn.disabled = safePage >= totalPages;
+  }
+
+  return safePage;
+}
+
 function renderClasses(keyword = "") {
   const filtered = getFilteredClasses(keyword);
+  const safePage = renderClassListPagination(filtered.length);
 
   if (filtered.length === 0) {
     refs.classTableBody.innerHTML = `<tr><td colspan="6">\u5F53\u524D\u6CA1\u6709\u5339\u914D\u7684\u73ED\u7EA7\u6570\u636E</td></tr>`;
     return;
   }
 
-  refs.classTableBody.innerHTML = filtered.map((item) => {
+  const startIndex = (safePage - 1) * CLASS_LIST_PAGE_SIZE;
+  const pagedClasses = filtered.slice(startIndex, startIndex + CLASS_LIST_PAGE_SIZE);
+
+  refs.classTableBody.innerHTML = pagedClasses.map((item) => {
     const enabled = isClassEnabled(item);
     const statusLabel = enabled ? "\u542F\u7528\u4E2D" : "\u5DF2\u505C\u7528";
     const toggleLabel = enabled ? "\u505C\u7528" : "\u542F\u7528";
@@ -130,7 +159,7 @@ function addClass() {
   refs.newClassInput.value = "";
   populateClassOptions(className);
   renderClasses(refs.classSearch?.value || "");
-  showToast("\u73ED\u7EA7\u5DF2\u521B\u5EFA\uFF0C\u53EF\u5728\u65B0\u751F\u62A5\u540D\u4E2D\u9009\u62E9");
+  showToast("\u73ED\u7EA7\u5DF2\u521B\u5EFA\uFF0C\u53EF\u5728\u65B0\u751F\u62A5\u540D\u4E2D\u76F4\u63A5\u9009\u62E9");
 }
 
 function getClassUsageSummary(className) {
@@ -172,8 +201,8 @@ function toggleClassStatus(classId) {
 
   showToast(
     nextStatus === "inactive"
-      ? "\u73ED\u7EA7\u5DF2\u505C\u7528\uFF0C\u5386\u53F2\u6570\u636E\u4FDD\u7559\uFF0C\u65B0\u62A5\u540D\u5C06\u4E0D\u53EF\u518D\u9009\u62E9"
-      : "\u73ED\u7EA7\u5DF2\u542F\u7528\uFF0C\u53EF\u91CD\u65B0\u5728\u65B0\u751F\u62A5\u540D\u4E2D\u9009\u62E9"
+      ? "\u73ED\u7EA7\u5DF2\u505C\u7528\uFF0C\u65B0\u62A5\u540D\u5C06\u4E0D\u518D\u53EF\u9009"
+      : "\u73ED\u7EA7\u5DF2\u542F\u7528\uFF0C\u65B0\u62A5\u540D\u53EF\u91CD\u65B0\u9009\u62E9"
   );
 }
 
@@ -203,7 +232,7 @@ function deleteClass(classId) {
     renderStudents(refs.studentSearch?.value || "");
   }
 
-  showToast("\u73ED\u7EA7\u5DF2\u5220\u9664\u3002\u5386\u53F2\u62A5\u540D\u548C\u4E0A\u8BFE\u8BB0\u5F55\u4ECD\u4F1A\u4FDD\u7559\u539F\u73ED\u7EA7\u540D\u79F0\u4F5C\u4E3A\u8FFD\u6EAF\u3002");
+  showToast("\u73ED\u7EA7\u5DF2\u5220\u9664\uFF0C\u5386\u53F2\u62A5\u540D\u548C\u4E0A\u8BFE\u8BB0\u5F55\u4ECD\u4F1A\u4FDD\u7559\u539F\u73ED\u7EA7\u540D\u79F0");
 }
 
 function editClass(classId) {

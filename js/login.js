@@ -1,6 +1,9 @@
 const loginForm = document.getElementById("loginForm");
 const toast = document.getElementById("toast");
 
+const DEFAULT_LOGIN_ACCOUNT = "admin";
+const DEFAULT_LOGIN_PASSWORD = "123456";
+
 function showToast(message) {
   toast.textContent = message;
   toast.classList.remove("hidden");
@@ -16,7 +19,7 @@ loginForm.addEventListener("submit", (event) => {
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
 
-  if (username === "admin" && password === "123456") {
+  if (username === DEFAULT_LOGIN_ACCOUNT && password === DEFAULT_LOGIN_PASSWORD) {
     sessionStorage.setItem("school-admin-auth", "true");
     window.location.href = "./dashboard.html";
     return;
