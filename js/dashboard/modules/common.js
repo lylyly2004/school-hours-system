@@ -9,6 +9,30 @@ function updateHeader() {
   }
 }
 
+function syncEnrollmentBusinessTabCopy(activeTab = currentBusinessTab) {
+  const labelMap = {
+    registration: "新生报名",
+    retail: "教材零售",
+    birthday: "学员生日",
+    today: "今日办理"
+  };
+
+  const titleMap = {
+    registration: "新生报名管理",
+    retail: "教材零售",
+    birthday: "学员生日",
+    today: "今日办理"
+  };
+
+  refs.businessTabs.forEach((button) => {
+    button.textContent = labelMap[button.dataset.businessTab] || button.textContent;
+  });
+
+  if (refs.enrollmentSectionTitle) {
+    refs.enrollmentSectionTitle.textContent = titleMap[activeTab] || "新生报名管理";
+  }
+}
+
 function applyTeachingTerminology() {
   const courseMenu = document.querySelector('.menu-item[data-page="course"]');
   if (courseMenu) courseMenu.textContent = "\u5B66\u79D1\u7BA1\u7406";
@@ -53,6 +77,8 @@ function applyTeachingTerminology() {
     if (classTypeLabel) classTypeLabel.textContent = "\u6388\u8BFE\u5F62\u5F0F\uFF08\u8F85\u52A9\uFF09";
     if (secondHeader) secondHeader.textContent = "\u6388\u8BFE\u5F62\u5F0F";
   }
+
+  syncEnrollmentBusinessTabCopy();
 }
 
 function switchPage(pageName) {
@@ -82,21 +108,15 @@ function setGroupExpanded(groupName, expanded) {
 
 function switchBusinessTab(tabName) {
   currentBusinessTab = tabName;
-  const titleMap = {
-    registration: "鏂扮敓鎶ュ悕绠＄悊",
-    retail: "鏁欐潗闆跺敭",
-    birthday: "瀛﹀憳鐢熸棩",
-    today: "浠婃棩鍔炵悊"
-  };
   refs.businessTabs.forEach((button) => button.classList.toggle("active", button.dataset.businessTab === tabName));
   refs.businessPanels.forEach((panel) => panel.classList.toggle("active", panel.id === `business-${tabName}`));
-  refs.enrollmentSectionTitle.textContent = titleMap[tabName] || "鏂扮敓鎶ュ悕绠＄悊";
+  syncEnrollmentBusinessTabCopy(tabName);
 }
 
 function populateTeacherOptions(selectedTeacher = "") {
   const options = teachers.length > 0
     ? teachers.map((teacher) => `<option value="${teacher.name}" ${teacher.name === selectedTeacher ? "selected" : ""}>${teacher.name}</option>`).join("")
-    : `<option value="">璇峰厛娣诲姞鏁欏笀</option>`;
+    : `<option value="">\u8BF7\u5148\u6DFB\u52A0\u6388\u8BFE\u6559\u5E08</option>`;
   refs.teacherSelect.innerHTML = options;
   refs.adjustTeacherSelect.innerHTML = options;
 }
@@ -104,7 +124,7 @@ function populateTeacherOptions(selectedTeacher = "") {
 function populateCampusOptions(selectedCampus = "") {
   if (!refs.campusSelect) return;
   refs.campusSelect.innerHTML = campusOptions
-    .filter((item) => item !== "閸忋劑鍎撮弽鈥冲隘")
+    .filter((item) => item !== "\u5168\u90E8\u6821\u533A")
     .map((item) => `<option value="${item}" ${item === selectedCampus ? "selected" : ""}>${item}</option>`)
     .join("");
 }
@@ -117,14 +137,14 @@ function populateCourseOptions(selectedCourse = "") {
   const selectableCourses = selectedInactiveCourse ? [...activeCourses, selectedInactiveCourse] : activeCourses;
   const options = selectableCourses.length > 0
     ? selectableCourses.map((course) => {
-      const inactiveLabel = isCourseEnabled(course) ? "" : "（已停用）";
+      const inactiveLabel = isCourseEnabled(course) ? "" : "\uFF08\u5DF2\u505C\u7528\uFF09";
       return `<option value="${course.name}" ${course.name === selectedCourse ? "selected" : ""}>${course.name}${inactiveLabel}</option>`;
     }).join("")
-    : `<option value="">请先创建课程类型</option>`;
+    : `<option value="">\u8BF7\u5148\u521B\u5EFA\u8BFE\u7A0B\u7C7B\u578B</option>`;
   refs.courseSelect.innerHTML = options;
   refs.retailCourseInput.innerHTML = options;
-  refs.todayCourseFilter.innerHTML = ["全部课程", ...courses.map((course) => course.name)].map((item) => `<option value="${item}">${item}</option>`).join("");
-  refs.transactionCourseFilter.innerHTML = ["全部课程", ...courses.map((course) => course.name)].map((item) => `<option value="${item}">${item}</option>`).join("");
+  refs.todayCourseFilter.innerHTML = ["\u5168\u90E8\u8BFE\u7A0B", ...courses.map((course) => course.name)].map((item) => `<option value="${item}">${item}</option>`).join("");
+  refs.transactionCourseFilter.innerHTML = ["\u5168\u90E8\u8BFE\u7A0B", ...courses.map((course) => course.name)].map((item) => `<option value="${item}">${item}</option>`).join("");
   refs.adjustCourseSelect.innerHTML = options;
 }
 
@@ -140,10 +160,10 @@ function populateClassOptions(selectedClass = "") {
   const selectableClasses = selectedInactiveClass ? [...activeClasses, selectedInactiveClass] : activeClasses;
   const options = selectableClasses.length > 0
     ? selectableClasses.map((item) => {
-      const inactiveLabel = isClassEnabled(item) ? "" : "（已停用）";
+      const inactiveLabel = isClassEnabled(item) ? "" : "\uFF08\u5DF2\u505C\u7528\uFF09";
       return `<option value="${item.name}" ${item.name === selectedClass ? "selected" : ""}>${item.name} / ${item.type}${inactiveLabel}</option>`;
     }).join("")
-    : `<option value="">请先创建班级</option>`;
+    : `<option value="">\u8BF7\u5148\u521B\u5EFA\u73ED\u7EA7</option>`;
   refs.classSelect.innerHTML = options;
   refs.adjustClassSelect.innerHTML = options;
 }
@@ -151,16 +171,16 @@ function populateClassOptions(selectedClass = "") {
 function populatePackageOptions(selectedPackage = "") {
   const isSelected = (pkg) => String(pkg.id) === String(selectedPackage) || pkg.name === selectedPackage;
   refs.packageSelect.innerHTML = chargePackages.map((pkg) => `
-    <option value="${pkg.id}" ${isSelected(pkg) ? "selected" : ""}>${pkg.name} - ${pkg.hours}课时 - ${pkg.price}</option>
+    <option value="${pkg.id}" ${isSelected(pkg) ? "selected" : ""}>${pkg.name} - ${pkg.hours}\u8BFE\u65F6 - ${pkg.price}</option>
   `).join("");
   refs.renewalPackageSelect.innerHTML = chargePackages.map((pkg) => `
-    <option value="${pkg.id}" ${isSelected(pkg) ? "selected" : ""}>${pkg.name} - ${pkg.hours}课时 - ${pkg.price}</option>
+    <option value="${pkg.id}" ${isSelected(pkg) ? "selected" : ""}>${pkg.name} - ${pkg.hours}\u8BFE\u65F6 - ${pkg.price}</option>
   `).join("");
 }
 
 function populateRetailBaseOptions() {
-  refs.retailCampusInput.innerHTML = campusOptions.filter((item) => item !== "全部校区").map((item) => `<option value="${item}">${item}</option>`).join("");
+  refs.retailCampusInput.innerHTML = campusOptions.filter((item) => item !== "\u5168\u90E8\u6821\u533A").map((item) => `<option value="${item}">${item}</option>`).join("");
   refs.retailCategoryInput.innerHTML = retailCategoryOptions.map((item) => `<option value="${item}">${item}</option>`).join("");
   refs.transactionCampusFilter.innerHTML = campusOptions.map((item) => `<option value="${item}">${item}</option>`).join("");
-  refs.transactionCategoryFilter.innerHTML = ["全部分类", "学费", ...retailCategoryOptions].map((item) => `<option value="${item}">${item}</option>`).join("");
+  refs.transactionCategoryFilter.innerHTML = ["\u5168\u90E8\u5206\u7C7B", "\u5B66\u8D39", ...retailCategoryOptions].map((item) => `<option value="${item}">${item}</option>`).join("");
 }

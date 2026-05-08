@@ -1804,6 +1804,11 @@ th {
   gap: 16px;
 }
 
+.guide-modal-card .enrollment-actions {
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
 .guide-section {
   padding: 18px;
   border: 1px solid #f0e2d3;
@@ -1821,6 +1826,32 @@ th {
   padding-left: 20px;
   color: var(--muted);
   line-height: 1.8;
+}
+
+.confirm-dialog-card {
+  width: min(92vw, 460px);
+  padding: 24px;
+}
+
+.confirm-dialog-body {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.confirm-dialog-body h3,
+.confirm-dialog-body p {
+  margin: 0;
+}
+
+.confirm-dialog-body p {
+  color: var(--muted);
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+.confirm-dialog-actions {
+  justify-content: flex-end;
 }
 
 .toast {

@@ -65,7 +65,7 @@ function getChargePackageDeleteBlockReason(pkg) {
   return "";
 }
 
-function deleteChargePackage(packageId) {
+async function deleteChargePackage(packageId) {
   const target = chargePackages.find((pkg) => Number(pkg.id) === Number(packageId));
   if (!target) return;
 
@@ -75,7 +75,7 @@ function deleteChargePackage(packageId) {
     return;
   }
 
-  if (!window.confirm(`确认删除收费模式“${target.name}”吗？`)) {
+  if (!await confirmDelete(`收费模式“${target.name}”`)) {
     return;
   }
 

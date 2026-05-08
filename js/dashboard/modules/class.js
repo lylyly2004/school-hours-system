@@ -206,7 +206,7 @@ function toggleClassStatus(classId) {
   );
 }
 
-function deleteClass(classId) {
+async function deleteClass(classId) {
   const target = classes.find((item) => Number(item.id) === Number(classId));
   if (!target) return;
 
@@ -216,7 +216,7 @@ function deleteClass(classId) {
     return;
   }
 
-  if (!window.confirm(`\u786E\u8BA4\u5220\u9664\u73ED\u7EA7\u201C${target.name}\u201D\u5417\uFF1F\n\u53EF\u5220\u9664\u6761\u4EF6\u5DF2\u6EE1\u8DB3\u3002\n\u5F53\u524D\u5173\u8054\u6570\u636E\uFF1A${usageInfo.message}`)) {
+  if (!await confirmDelete(`班级“${target.name}”`, `可删除条件已满足。\n当前关联数据：${usageInfo.message}`)) {
     return;
   }
 

@@ -128,12 +128,12 @@ function saveCampus() {
   showToast("\u6821\u533A\u5DF2\u65B0\u589E");
 }
 
-function deleteCampus(campusName) {
+async function deleteCampus(campusName) {
   if (!canDeleteCampus(campusName)) {
     showToast(getCampusDeleteBlockReason(campusName));
     return;
   }
-  if (!window.confirm(`\u786E\u8BA4\u5220\u9664\u6821\u533A\u201C${campusName}\u201D\u5417\uFF1F`)) {
+  if (!await confirmDelete(`校区“${campusName}”`)) {
     return;
   }
 
@@ -205,7 +205,7 @@ function ensureCampusManagerUi() {
         showToast(deleteBtn.dataset.deleteCampusReason || "\u5F53\u524D\u6821\u533A\u4E0D\u6EE1\u8DB3\u5220\u9664\u6761\u4EF6");
         return;
       }
-      deleteCampus(deleteBtn.dataset.deleteCampusName);
+      void deleteCampus(deleteBtn.dataset.deleteCampusName);
     });
   }
 }

@@ -71,6 +71,8 @@ function bindEvents() {
   });
   refs.closeUsageGuideBtn?.addEventListener("click", () => closeModal(refs.usageGuideModal));
   refs.confirmUsageGuideBtn?.addEventListener("click", () => closeModal(refs.usageGuideModal));
+  refs.confirmDialogCancelBtn?.addEventListener("click", () => closeConfirmDialog(false));
+  refs.confirmDialogConfirmBtn?.addEventListener("click", () => closeConfirmDialog(true));
   document.addEventListener("click", (event) => {
     const menu = refs.dataToolsToggle?.closest(".top-tools-menu");
     if (!menu?.hasAttribute("open")) return;
@@ -118,7 +120,7 @@ function bindEvents() {
       showToast(deleteBtn.dataset.deleteClassTypeReason || "当前授课形式不满足删除条件");
       return;
     }
-    deleteClassType(deleteBtn.dataset.deleteClassType);
+    void deleteClassType(deleteBtn.dataset.deleteClassType);
   });
 
   refs.saveEnrollmentBtn.addEventListener("click", saveEnrollment);
@@ -308,7 +310,7 @@ function bindEvents() {
   refs.cancelStudentAdjustBtn.addEventListener("click", () => closeModal(refs.studentAdjustModal));
   refs.saveStudentAdjustBtn.addEventListener("click", saveStudentAdjust);
 
-  refs.enrollmentTableBody.addEventListener("click", (event) => {
+  refs.enrollmentTableBody.addEventListener("click", async (event) => {
     const detailBtn = event.target.closest("[data-detail-enrollment-id]");
     if (detailBtn) {
       document.getElementById(`detail-row-${detailBtn.dataset.detailEnrollmentId}`)?.classList.toggle("hidden");
@@ -321,7 +323,7 @@ function bindEvents() {
     }
     const deleteBtn = event.target.closest("[data-delete-enrollment-id]");
     if (deleteBtn) {
-      if (!confirmDelete("这条报名记录")) return;
+      if (!await confirmDelete("这条报名记录")) return;
       enrollmentRecords = enrollmentRecords.filter((item) => item.id !== Number(deleteBtn.dataset.deleteEnrollmentId));
       renderEnrollmentRecords();
       renderStudents(refs.studentSearch.value || "");
@@ -344,7 +346,7 @@ function bindEvents() {
     showToast("生日备注已更新。")
   });
 
-  refs.retailTableBody.addEventListener("click", (event) => {
+  refs.retailTableBody.addEventListener("click", async (event) => {
     const detailBtn = event.target.closest("[data-detail-retail-id]");
     if (detailBtn) {
       document.getElementById(`retail-detail-row-${detailBtn.dataset.detailRetailId}`)?.classList.toggle("hidden");
@@ -357,7 +359,7 @@ function bindEvents() {
     }
     const deleteBtn = event.target.closest("[data-delete-retail-id]");
     if (deleteBtn) {
-      if (!window.confirm("确认删除这条零售记录吗？删除后会同步移除对应流水。")) return;
+      if (!await confirmDelete("这条零售记录", "删除后会同步移除对应流水。")) return;
       const retailId = Number(deleteBtn.dataset.deleteRetailId);
       retailRecords = retailRecords.filter((item) => item.id !== retailId);
       transactions = transactions.filter((item) => !(item.sourceType === "retail" && item.sourceId === retailId));
@@ -367,7 +369,7 @@ function bindEvents() {
     }
   });
 
-  refs.teacherCardList.addEventListener("click", (event) => {
+  refs.teacherCardList.addEventListener("click", async (event) => {
     const detailBtn = event.target.closest("[data-detail-teacher-id]");
     if (detailBtn) {
       const targetId = detailBtn.dataset.detailTeacherId;
@@ -397,7 +399,7 @@ function bindEvents() {
     }
     const deleteBtn = event.target.closest("[data-delete-teacher-id]");
     if (deleteBtn) {
-      if (!confirmDelete("这位教师")) return;
+      if (!await confirmDelete("这位教师")) return;
       const teacherId = Number(deleteBtn.dataset.deleteTeacherId);
       teachers = teachers.filter((item) => item.id !== teacherId);
       populateTeacherOptions(teachers[0]?.name || "");
@@ -422,7 +424,7 @@ function bindEvents() {
       showToast(deleteBtn.dataset.deleteChargeReason || "当前收费模式不满足删除条件");
       return;
     }
-    deleteChargePackage(Number(deleteBtn.dataset.deleteChargePackageId));
+    void deleteChargePackage(Number(deleteBtn.dataset.deleteChargePackageId));
   });
 
   refs.courseTableBody.addEventListener("click", (event) => {
@@ -462,7 +464,7 @@ function bindEvents() {
         showToast(deleteBtn.dataset.deleteClassReason || "\u5F53\u524D\u73ED\u7EA7\u4E0D\u6EE1\u8DB3\u5220\u9664\u6761\u4EF6");
         return;
       }
-      deleteClass(Number(deleteBtn.dataset.deleteClassId));
+      void deleteClass(Number(deleteBtn.dataset.deleteClassId));
       return;
     }
     const toggleBtn = event.target.closest("[data-toggle-class-id]");
@@ -498,7 +500,7 @@ function bindEvents() {
     renderSessionStudents();
   });
 
-  refs.sessionTableBody.addEventListener("click", (event) => {
+  refs.sessionTableBody.addEventListener("click", async (event) => {
     const detailBtn = event.target.closest("[data-detail-session-id]");
     if (detailBtn) {
       document.getElementById(`session-detail-row-${detailBtn.dataset.detailSessionId}`)?.classList.toggle("hidden");
@@ -506,7 +508,7 @@ function bindEvents() {
     }
     const deleteBtn = event.target.closest("[data-delete-session-id]");
     if (!deleteBtn) return;
-    if (!confirmDelete("这条上课记录")) return;
+    if (!await confirmDelete("这条上课记录")) return;
     deleteSessionRecord(Number(deleteBtn.dataset.deleteSessionId));
   });
 

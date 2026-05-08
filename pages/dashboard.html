@@ -1023,7 +1023,7 @@
         <section class="guide-section">
           <h4>首次使用</h4>
           <ul>
-            <li>建议先创建校区、学科、教师、班级和收费模式。</li>
+            <li>建议先创建校区（在“流水管理 -> 校区管理”中创建）、学科、教师、班级和收费模式。</li>
             <li>首次使用前先点一次“绑定数据文件”，绑定固定的本地数据文件。</li>
             <li>之后再开始录入真实的报名、上课、续费和退费数据。</li>
           </ul>
@@ -1047,6 +1047,20 @@
       </div>
       <div class="enrollment-actions">
         <button class="primary-btn" type="button" id="confirmUsageGuideBtn">我知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="confirmDialogModal">
+    <div class="modal-mask"></div>
+    <div class="modal-card confirm-dialog-card">
+      <div class="confirm-dialog-body">
+        <h3 id="confirmDialogTitle">确认删除</h3>
+        <p id="confirmDialogMessage">确认执行当前删除操作吗？</p>
+      </div>
+      <div class="enrollment-actions confirm-dialog-actions">
+        <button class="table-refund-btn" type="button" id="confirmDialogConfirmBtn">确认删除</button>
+        <button class="secondary-btn" type="button" id="confirmDialogCancelBtn">取消</button>
       </div>
     </div>
   </div>

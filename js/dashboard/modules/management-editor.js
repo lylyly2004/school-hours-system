@@ -143,13 +143,13 @@ function saveManagementEditor() {
   showToast("\u6388\u8BFE\u5F62\u5F0F\u5DF2\u6DFB\u52A0");
 }
 
-function deleteClassType(typeName) {
+async function deleteClassType(typeName) {
   if (!canDeleteClassType(typeName)) {
     showToast(getClassTypeDeleteReason(typeName) || "当前授课形式不满足删除条件");
     return;
   }
 
-  if (!window.confirm(`确认删除授课形式“${typeName}”吗？`)) {
+  if (!await confirmDelete(`授课形式“${typeName}”`)) {
     return;
   }
 

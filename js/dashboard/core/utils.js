@@ -721,6 +721,65 @@ function openModal(modal) {
   document.body.classList.add("modal-open");
 }
 
-function confirmDelete(label) {
-  return window.confirm(`\u786E\u8BA4\u5220\u9664${label}\u5417\uFF1F\u5220\u9664\u540E\u5C06\u65E0\u6CD5\u6062\u590D\u3002`);
+let confirmDialogResolver = null;
+
+function closeConfirmDialog(result = false) {
+  if (!refs.confirmDialogModal) return result;
+  closeModal(refs.confirmDialogModal);
+  const resolve = confirmDialogResolver;
+  confirmDialogResolver = null;
+  if (typeof resolve === "function") {
+    resolve(result);
+  }
+  return result;
+}
+
+function openConfirmDialog(options = {}) {
+  if (!refs.confirmDialogModal) {
+    return Promise.resolve(window.confirm(options.message || options.title || "确认执行当前操作吗？"));
+  }
+
+  if (typeof confirmDialogResolver === "function") {
+    confirmDialogResolver(false);
+    confirmDialogResolver = null;
+  }
+
+  const {
+    title = "确认操作",
+    message = "确认执行当前操作吗？",
+    confirmText = "确认",
+    cancelText = "取消"
+  } = options;
+
+  if (refs.confirmDialogTitle) {
+    refs.confirmDialogTitle.textContent = title;
+  }
+  if (refs.confirmDialogMessage) {
+    refs.confirmDialogMessage.textContent = message;
+  }
+  if (refs.confirmDialogConfirmBtn) {
+    refs.confirmDialogConfirmBtn.textContent = confirmText;
+  }
+  if (refs.confirmDialogCancelBtn) {
+    refs.confirmDialogCancelBtn.textContent = cancelText;
+  }
+
+  openModal(refs.confirmDialogModal);
+
+  return new Promise((resolve) => {
+    confirmDialogResolver = resolve;
+  });
+}
+
+function confirmDelete(label, extraMessage = "") {
+  const message = extraMessage
+    ? `确认删除${label}吗？\n${extraMessage}`
+    : `确认删除${label}吗？删除后将无法恢复。`;
+
+  return openConfirmDialog({
+    title: "确认删除",
+    message,
+    confirmText: "确认删除",
+    cancelText: "取消"
+  });
 }
