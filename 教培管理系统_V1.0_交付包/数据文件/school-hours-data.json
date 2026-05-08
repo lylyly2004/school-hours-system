@@ -1,0 +1,54 @@
+﻿{
+    "exportedAt":  "2026-05-08T15:42:16+08:00",
+    "version":  1,
+    "data":  {
+                 "campusOptions":  [
+                                       "全部校区",
+                                       "总部校区"
+                                   ],
+                 "retailCategoryOptions":  [
+                                               "教材",
+                                               "配件",
+                                               "乐器",
+                                               "学习用品"
+                                           ],
+                 "chargePackages":  [
+
+                                    ],
+                 "courses":  [
+
+                             ],
+                 "classTypeOptions":  [
+                                          "1对1",
+                                          "1对2",
+                                          "小组课",
+                                          "班制课"
+                                      ],
+                 "teachers":  [
+
+                              ],
+                 "classes":  [
+
+                             ],
+                 "enrollmentRecords":  [
+
+                                       ],
+                 "retailRecords":  [
+
+                                   ],
+                 "birthdayNotes":  {
+
+                                   },
+                 "todayRecords":  [
+
+                                  ],
+                 "sessionRecords":  [
+
+                                    ],
+                 "transactions":  [
+
+                                  ],
+                 "selectedSessionTeacherName":  "",
+                 "selectedSessionClassName":  ""
+             }
+}
