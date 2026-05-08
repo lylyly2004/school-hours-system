@@ -1,4 +1,4 @@
-let currentStudentDetailId = null;
+﻿let currentStudentDetailId = null;
 let currentStudentDetailPage = 1;
 let currentStudentDetailSection = "session";
 let currentStudentListPage = 1;
@@ -688,7 +688,7 @@ function saveStudentAdjust() {
   showToast(changeType === "teacher_change" ? "\u5B66\u5458\u6362\u8001\u5E08\u5DF2\u4FDD\u5B58\u3002" : "\u5B66\u5458\u8F6C\u73ED\u5DF2\u4FDD\u5B58\u3002");
 }
 
-function updateStudentLifecycle(recordId, nextStatus) {
+async function updateStudentLifecycle(recordId, nextStatus) {
   const target = enrollmentRecords.find((item) => Number(item.id) === Number(recordId));
   if (!target) return;
 
@@ -711,16 +711,33 @@ function updateStudentLifecycle(recordId, nextStatus) {
   let refundAmount = 0;
   const remainingBeforeRefund = getEnrollmentRemainingHours(target);
   if (nextStatus === "refunded") {
-    const input = window.prompt("\u8BF7\u8F93\u5165\u672C\u6B21\u9000\u8D39\u91D1\u989D", "");
+    const input = await openTextInputDialog({
+      title: "\u9000\u8d39\u91d1\u989d",
+      hint: `\u8bf7\u4e3a ${target.studentName} \u8f93\u5165\u672c\u6b21\u9000\u8d39\u91d1\u989d\u3002`, 
+      label: "\u9000\u8d39\u91d1\u989d",
+      value: "",
+      placeholder: "\u8bf7\u8f93\u5165\u9000\u8d39\u91d1\u989d",
+      confirmText: "\u786e\u8ba4\u91d1\u989d",
+      cancelText: "\u53d6\u6d88"
+    });
     if (input === null) return;
     refundAmount = Number(input);
     if (!Number.isFinite(refundAmount) || refundAmount < 0) {
-      showToast("\u8BF7\u8F93\u5165\u6B63\u786E\u7684\u9000\u8D39\u91D1\u989D\u3002");
+      showToast("\u8bf7\u8f93\u5165\u6b63\u786e\u7684\u9000\u8d39\u91d1\u989d\u3002");
       return;
     }
   }
 
-  const note = window.prompt(`\u53EF\u9009\uFF1A\u586B\u5199${actionLabel}\u5907\u6CE8`, "") || "";
+  const noteInput = await openTextInputDialog({
+    title: `${actionLabel}\u5907\u6ce8`, 
+    hint: `\u53ef\u9009\uff1a\u4e3a ${target.studentName} \u586b\u5199${actionLabel}\u5907\u6ce8\u3002`, 
+    label: "\u5907\u6ce8\u5185\u5bb9",
+    value: "",
+    placeholder: `\u53ef\u9009\uff1a\u8bf7\u8f93\u5165${actionLabel}\u5907\u6ce8`, 
+    confirmText: "\u4fdd\u5b58",
+    cancelText: "\u8df3\u8fc7"
+  });
+  const note = noteInput === null ? "" : String(noteInput).trim();
 
   enrollmentRecords = enrollmentRecords.map((record) => {
     if (Number(record.id) !== Number(recordId)) return record;
@@ -749,9 +766,8 @@ function updateStudentLifecycle(recordId, nextStatus) {
       type: "\u9000\u8D39",
       amount: -Math.abs(refundAmount),
       note: note || `\u5B66\u5458\u9000\u8D39\uFF0C\u5269\u4F59\u8BFE\u65F6 ${remainingBeforeRefund}`,
-      campus: "\u603B\u90E8\u6821\u533A",
-        campus: target.campus || "\u603B\u90E8\u6821\u533A",
-        course: target.courseName || "",
+      campus: target.campus || "\u603B\u90E8\u6821\u533A",
+      course: target.courseName || "",
       category: "\u5B66\u8D39",
       itemName: "",
       sourceType: "refund",

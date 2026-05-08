@@ -1065,6 +1065,28 @@
     </div>
   </div>
 
+  <div class="modal hidden" id="inputDialogModal">
+    <div class="modal-mask"></div>
+    <div class="modal-card input-dialog-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="inputDialogTitle">输入内容</h3>
+          <p class="modal-tip hidden" id="inputDialogHint"></p>
+        </div>
+      </div>
+      <div class="form-grid compact-grid">
+        <label class="field">
+          <span id="inputDialogLabel">请输入内容</span>
+          <input id="inputDialogInput" type="text" autocomplete="off" />
+        </label>
+      </div>
+      <div class="enrollment-actions">
+        <button class="secondary-btn" type="button" id="inputDialogCancelBtn">取消</button>
+        <button class="primary-btn" type="button" id="inputDialogConfirmBtn">确认</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast hidden" id="toast"></div>
 
   <script src="../js/dashboard/core/state.js"></script>

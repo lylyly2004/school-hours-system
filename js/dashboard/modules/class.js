@@ -235,7 +235,7 @@ async function deleteClass(classId) {
   showToast("\u73ED\u7EA7\u5DF2\u5220\u9664\uFF0C\u5386\u53F2\u62A5\u540D\u548C\u4E0A\u8BFE\u8BB0\u5F55\u4ECD\u4F1A\u4FDD\u7559\u539F\u73ED\u7EA7\u540D\u79F0");
 }
 
-function editClass(classId) {
+async function editClass(classId) {
   const target = classes.find((item) => Number(item.id) === Number(classId));
   if (!target) return;
 
@@ -245,7 +245,15 @@ function editClass(classId) {
     return;
   }
 
-  const nextNameRaw = window.prompt("\u8BF7\u8F93\u5165\u65B0\u7684\u73ED\u7EA7\u540D\u79F0", target.name);
+  const nextNameRaw = await openTextInputDialog({
+    title: "\u4FEE\u6539\u73ED\u7EA7\u540D\u79F0",
+    hint: "\u4EC5\u9650\u672A\u6709\u4E0A\u8BFE\u8BB0\u5F55\u7684\u73ED\u7EA7\u53EF\u4EE5\u76F4\u63A5\u6539\u540D\u3002",
+    label: "\u65B0\u7684\u73ED\u7EA7\u540D\u79F0",
+    value: target.name,
+    placeholder: "\u8BF7\u8F93\u5165\u65B0\u7684\u73ED\u7EA7\u540D\u79F0",
+    confirmText: "\u4FDD\u5B58\u4FEE\u6539",
+    cancelText: "\u53D6\u6D88"
+  });
   if (nextNameRaw === null) return;
   const nextName = String(nextNameRaw).trim();
 

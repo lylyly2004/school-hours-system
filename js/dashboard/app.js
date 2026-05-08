@@ -1,4 +1,4 @@
-function bindEvents() {
+﻿function bindEvents() {
   const closeDataToolsMenu = () => {
     refs.dataToolsToggle?.closest(".top-tools-menu")?.removeAttribute("open");
   };
@@ -63,7 +63,7 @@ function bindEvents() {
   refs.importDataInput.addEventListener("change", () => {
     const file = refs.importDataInput.files?.[0];
     if (!file) return;
-    if (!window.confirm("导入数据会覆盖当前本机保存的数据，是否继续？")) {
+    if (!window.confirm("瀵煎叆鏁版嵁浼氳鐩栧綋鍓嶆湰鏈轰繚瀛樼殑鏁版嵁锛屾槸鍚︾户缁紵")) {
       refs.importDataInput.value = "";
       return;
     }
@@ -73,6 +73,14 @@ function bindEvents() {
   refs.confirmUsageGuideBtn?.addEventListener("click", () => closeModal(refs.usageGuideModal));
   refs.confirmDialogCancelBtn?.addEventListener("click", () => closeConfirmDialog(false));
   refs.confirmDialogConfirmBtn?.addEventListener("click", () => closeConfirmDialog(true));
+  refs.inputDialogCancelBtn?.addEventListener("click", () => closeInputDialog(null));
+  refs.inputDialogConfirmBtn?.addEventListener("click", () => closeInputDialog(refs.inputDialogInput?.value ?? ""));
+  refs.inputDialogInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      closeInputDialog(refs.inputDialogInput?.value ?? "");
+    }
+  });
   document.addEventListener("click", (event) => {
     const menu = refs.dataToolsToggle?.closest(".top-tools-menu");
     if (!menu?.hasAttribute("open")) return;
@@ -168,7 +176,7 @@ function bindEvents() {
   refs.resetTodayBtn.addEventListener("click", () => {
     refs.todayDateFilter.value = "";
     setTodayPage(1);
-    refs.todayCourseFilter.value = "鍏ㄩ儴璇剧▼";
+    refs.todayCourseFilter.value = "閸忋劑鍎寸拠鍓р柤";
     renderTodayRecords();
   });
 
@@ -188,9 +196,9 @@ function bindEvents() {
   refs.resetTransactionBtn.addEventListener("click", () => {
     refs.transactionDateFrom.value = "";
     refs.transactionDateTo.value = "";
-    refs.transactionCampusFilter.value = "鍏ㄩ儴鏍″尯";
-    refs.transactionCourseFilter.value = "鍏ㄩ儴璇剧▼";
-    refs.transactionCategoryFilter.value = "鍏ㄩ儴鍒嗙被";
+    refs.transactionCampusFilter.value = "閸忋劑鍎撮弽鈥冲隘";
+    refs.transactionCourseFilter.value = "閸忋劑鍎寸拠鍓р柤";
+    refs.transactionCategoryFilter.value = "閸忋劑鍎撮崚鍡欒";
     refs.transactionTypeFilter.value = "\u5168\u90E8\u7C7B\u578B";
     refs.transactionStudentKeyword.value = "";
     refs.transactionItemKeyword.value = "";
@@ -330,28 +338,28 @@ function bindEvents() {
       renderBirthdayRecords();
       renderRenewalList();
       renderSessionWorkspace();
-      showToast("报名记录已删除。")
+      showToast("报名记录已删除。");
     }
   });
 
-  refs.birthdayTableBody.addEventListener("click", (event) => {
+  refs.birthdayTableBody.addEventListener("click", async (event) => {
     const noteBtn = event.target.closest("[data-birthday-note]");
     if (!noteBtn) return;
     const name = noteBtn.dataset.birthdayNote;
     const currentNote = birthdayNotes[name] || "";
-    const nextNote = window.prompt(`为 ${name} 添加或修改生日备注：`, currentNote);
+    const nextNote = await openTextInputDialog({
+      title: "生日备注",
+      hint: `为 ${name} 添加或修改生日备注。`, 
+      label: "备注内容",
+      value: currentNote,
+      placeholder: "请输入生日备注",
+      confirmText: "保存备注",
+      cancelText: "取消"
+    });
     if (nextNote === null) return;
     birthdayNotes[name] = nextNote.trim();
     renderBirthdayRecords();
-    showToast("生日备注已更新。")
-  });
-
-  refs.retailTableBody.addEventListener("click", async (event) => {
-    const detailBtn = event.target.closest("[data-detail-retail-id]");
-    if (detailBtn) {
-      document.getElementById(`retail-detail-row-${detailBtn.dataset.detailRetailId}`)?.classList.toggle("hidden");
-      return;
-    }
+    showToast("生日备注已更新。");
     const editBtn = event.target.closest("[data-edit-retail-id]");
     if (editBtn) {
       openRetailModal(Number(editBtn.dataset.editRetailId));
@@ -365,7 +373,7 @@ function bindEvents() {
       transactions = transactions.filter((item) => !(item.sourceType === "retail" && item.sourceId === retailId));
       renderRetailRecords();
       renderTransactions();
-      showToast("闆跺敭璁板綍宸插垹闄わ紝骞跺凡鍚屾鏇存柊娴佹按");
+      showToast("零售记录已删除，关联流水已同步移除。");
     }
   });
 
@@ -408,7 +416,7 @@ function bindEvents() {
       renderStudents(refs.studentSearch?.value || "");
       renderSessionTeacherPicker();
       renderSessionWorkspace();
-      showToast("教师已删除。")
+      showToast("教师已删除。");
     }
   });
 
@@ -554,7 +562,7 @@ async function init() {
   normalizeSharedData();
   applySystemShellCopy();
   populateRetailBaseOptions();
-  populateCampusOptions(campusOptions.find((item) => item !== "鍏ㄩ儴鏍″尯") || "");
+  populateCampusOptions(campusOptions.find((item) => item !== "全部校区") || "");
   populateTeacherOptions(teachers[0]?.name || "");
   populateCourseOptions(courses[0]?.name || "");
   populateClassTypeOptions(classTypeOptions[0] || "");
@@ -571,7 +579,7 @@ async function init() {
   renderEnrollmentRecords();
   renderBirthdayRecords();
   refs.todayDateFilter.value = getTodayString();
-  refs.todayCourseFilter.value = "鍏ㄩ儴璇剧▼";
+  refs.todayCourseFilter.value = "閸忋劑鍎寸拠鍓р柤";
   setTodayPage(1);
   renderTodayRecords();
   renderRetailRecords();

@@ -1,4 +1,4 @@
-function showToast(message) {
+﻿function showToast(message) {
   if (!refs.toast) return;
   refs.toast.textContent = message;
   refs.toast.classList.remove("hidden");
@@ -7,6 +7,50 @@ function showToast(message) {
   showToast.timer = window.setTimeout(() => {
     refs.toast.classList.add("hidden");
   }, 2200);
+}
+
+function closeInputDialog(result = null) {
+  if (!refs.inputDialogModal) return result;
+  closeModal(refs.inputDialogModal);
+  const resolve = inputDialogResolver;
+  inputDialogResolver = null;
+  if (typeof resolve === "function") {
+    resolve(result);
+  }
+  return result;
+}
+
+function openTextInputDialog(options = {}) {
+  if (!refs.inputDialogModal || !refs.inputDialogInput) {
+    return Promise.resolve(window.prompt(options.label || options.title || "请输入内容", options.value || ""));
+  }
+
+  if (typeof inputDialogResolver === "function") {
+    inputDialogResolver(null);
+  }
+
+  refs.inputDialogTitle.textContent = options.title || "输入内容";
+  refs.inputDialogLabel.textContent = options.label || "请输入内容";
+  refs.inputDialogInput.value = options.value || "";
+  refs.inputDialogInput.placeholder = options.placeholder || "";
+  refs.inputDialogConfirmBtn.textContent = options.confirmText || "确认";
+  refs.inputDialogCancelBtn.textContent = options.cancelText || "取消";
+
+  const hintText = String(options.hint || "").trim();
+  if (refs.inputDialogHint) {
+    refs.inputDialogHint.textContent = hintText;
+    refs.inputDialogHint.classList.toggle("hidden", !hintText);
+  }
+
+  openModal(refs.inputDialogModal);
+  setTimeout(() => {
+    refs.inputDialogInput?.focus();
+    refs.inputDialogInput?.select();
+  }, 0);
+
+  return new Promise((resolve) => {
+    inputDialogResolver = resolve;
+  });
 }
 
 function uid() {
@@ -209,7 +253,7 @@ async function bindDataFile() {
       suggestedName: "school-hours-data.json",
       types: [
         {
-          description: "JSON 数据文件",
+          description: "JSON 鏁版嵁鏂囦欢",
           accept: { "application/json": [".json"] }
         }
       ]
@@ -224,7 +268,7 @@ async function bindDataFile() {
 
     const existingPayload = await readAppDataFromBoundFile(handle);
     if (hasMeaningfulAppData(existingPayload)) {
-      const shouldImport = window.confirm("检测到该数据文件已有内容。点击“确定”加载文件数据；点击“取消”则用当前系统数据覆盖文件。");
+      const shouldImport = window.confirm("检测到该数据文件已有内容。点击“确定”加载文件数据；点击“取消”则用当前系统数据覆盖文件。")
       if (shouldImport) {
         applyPersistedData(existingPayload);
         normalizeSharedData();
@@ -289,9 +333,9 @@ async function syncFromBoundDataFile(showSuccessToast = true) {
     if (showSuccessToast) {
       window.alert("从数据文件同步失败，请检查文件是否可访问。");
     }
-      return false;
-    }
+    return false;
   }
+}
 
 const originalBindDataFile = bindDataFile;
 bindDataFile = async function (...args) {
@@ -476,7 +520,7 @@ function exportAppData() {
   link.click();
   document.body.removeChild(link);
   window.URL.revokeObjectURL(objectUrl);
-  showToast("数据已导出。");
+  showToast("数据已导出");
 }
 
 function importAppDataFromFile(file) {
@@ -722,6 +766,7 @@ function openModal(modal) {
 }
 
 let confirmDialogResolver = null;
+let inputDialogResolver = null;
 
 function closeConfirmDialog(result = false) {
   if (!refs.confirmDialogModal) return result;
@@ -736,7 +781,7 @@ function closeConfirmDialog(result = false) {
 
 function openConfirmDialog(options = {}) {
   if (!refs.confirmDialogModal) {
-    return Promise.resolve(window.confirm(options.message || options.title || "确认执行当前操作吗？"));
+    return Promise.resolve(window.confirm(options.message || options.title || "纭鎵ц褰撳墠鎿嶄綔鍚楋紵"));
   }
 
   if (typeof confirmDialogResolver === "function") {
@@ -745,10 +790,10 @@ function openConfirmDialog(options = {}) {
   }
 
   const {
-    title = "确认操作",
-    message = "确认执行当前操作吗？",
-    confirmText = "确认",
-    cancelText = "取消"
+    title = "纭鎿嶄綔",
+    message = "纭鎵ц褰撳墠鎿嶄綔鍚楋紵",
+    confirmText = "纭",
+    cancelText = "鍙栨秷"
   } = options;
 
   if (refs.confirmDialogTitle) {
@@ -773,7 +818,7 @@ function openConfirmDialog(options = {}) {
 
 function confirmDelete(label, extraMessage = "") {
   const message = extraMessage
-    ? `确认删除${label}吗？\n${extraMessage}`
+    ? `确认删除${label}吗？` + "`n" + extraMessage
     : `确认删除${label}吗？删除后将无法恢复。`;
 
   return openConfirmDialog({

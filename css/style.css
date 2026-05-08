@@ -1833,10 +1833,27 @@ th {
   padding: 24px;
 }
 
+.input-dialog-card {
+  width: min(92vw, 520px);
+  padding: 24px;
+}
+
 .confirm-dialog-body {
   display: grid;
   gap: 10px;
   margin-bottom: 18px;
+}
+
+.input-dialog-card .modal-head {
+  margin-bottom: 16px;
+}
+
+.input-dialog-card .modal-tip {
+  margin-top: 6px;
+}
+
+.input-dialog-card .enrollment-actions {
+  margin-top: 20px;
 }
 
 .confirm-dialog-body h3,
