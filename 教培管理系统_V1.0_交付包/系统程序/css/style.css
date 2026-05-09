@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #f4f1eb;
   --panel-strong: #fff;
   --line: #e6dccf;
@@ -233,7 +233,8 @@ input {
 
 .brand-block {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   align-items: center;
   margin-bottom: 30px;
   padding: 16px 18px;
@@ -250,6 +251,11 @@ input {
   flex-shrink: 0;
 }
 
+.brand-text {
+  width: 100%;
+  text-align: center;
+}
+
 .brand-logo {
   width: 100%;
   height: 100%;
@@ -259,8 +265,9 @@ input {
 
 .brand-block h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.2;
+  white-space: normal;
 }
 
 .menu {
@@ -1959,4 +1966,39 @@ th {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+
+.license-panel,
+.sidebar-license {
+  border: 1px solid rgba(230, 220, 207, 0.9);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.license-panel {
+  margin-top: 18px;
+}
+
+.sidebar-license {
+  margin-bottom: 20px;
+}
+
+.license-panel p,
+.sidebar-license p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.license-panel p + p,
+.sidebar-license p + p {
+  margin-top: 4px;
+}
+
+.license-panel strong,
+.sidebar-license strong {
+  color: var(--text);
 }

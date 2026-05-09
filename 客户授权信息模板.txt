@@ -1,0 +1,28 @@
+客户授权信息模板
+
+客户机构名称：
+
+授权编号：
+
+系统版本：
+V1.0
+
+交付日期：
+
+备注：
+
+----------------------------------------
+对应需要修改的文件：
+教培管理系统_V1.0_交付包\系统程序\授权信息.js
+
+需要修改的字段：
+1. institutionName
+2. licenseCode
+3. version
+
+示例：
+window.RUNTIME_LICENSE_INFO = {
+  institutionName: "某某艺术培训中心",
+  licenseCode: "CLIENT-V1-0008",
+  version: "V1.0"
+};

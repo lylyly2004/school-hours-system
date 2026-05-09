@@ -1,8 +1,16 @@
-const loginForm = document.getElementById("loginForm");
+﻿const loginForm = document.getElementById("loginForm");
 const toast = document.getElementById("toast");
+const licenseInfo = window.RUNTIME_LICENSE_INFO || {};
+const loginLicenseInstitution = document.getElementById("loginLicenseInstitution");
+const loginLicenseCode = document.getElementById("loginLicenseCode");
+const loginLicenseVersion = document.getElementById("loginLicenseVersion");
 
 const DEFAULT_LOGIN_ACCOUNT = "admin";
 const DEFAULT_LOGIN_PASSWORD = "123456";
+
+if (loginLicenseInstitution) loginLicenseInstitution.textContent = licenseInfo.institutionName || "未设置";
+if (loginLicenseCode) loginLicenseCode.textContent = licenseInfo.licenseCode || "未设置";
+if (loginLicenseVersion) loginLicenseVersion.textContent = licenseInfo.version || "未设置";
 
 function showToast(message) {
   toast.textContent = message;

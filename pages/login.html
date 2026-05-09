@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>登录 - 教培管理系统</title>
+  <title>登录 - 轻课管教培课时管理系统</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 
@@ -14,7 +14,7 @@
       <div class="visual-overlay"></div>
       <div class="visual-copy">
         <p class="eyebrow">Training Hours System</p>
-        <h1>培训机构课时管理系统</h1>
+        <h1>轻课管教培课时管理系统</h1>
         <p>适用于教学、收费与课时管理的轻量化本地系统。</p>
       </div>
     </div>
@@ -39,13 +39,22 @@
         </form>
 
         <p class="hint">默认账号：admin / 123456</p>
+        <div class="license-panel">
+          <p><strong>授权机构：</strong><span id="loginLicenseInstitution">-</span></p>
+          <p><strong>授权编号：</strong><span id="loginLicenseCode">-</span></p>
+          <p><strong>授权版本：</strong><span id="loginLicenseVersion">-</span></p>
+        </div>
       </div>
     </div>
   </section>
 
   <div class="toast hidden" id="toast"></div>
 
+  <script src="../授权信息.js"></script>
   <script src="../js/login.js"></script>
 </body>
 
 </html>
+
+
+

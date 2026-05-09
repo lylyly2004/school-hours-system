@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>教培管理系统</title>
+  <title>轻课管教培课时管理系统</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 
@@ -15,9 +15,14 @@
         <div class="brand-mark">
           <img src="../images/Logo.svg" alt="课时管理系统标识" class="brand-logo" />
         </div>
-        <div>
-          <h2>教培管理系统</h2>
+        <div class="brand-text">
+          <h2>轻课管教培课时管理系统</h2>
         </div>
+      </div>
+      <div class="sidebar-license">
+        <p><strong>授权机构：</strong><span id="sidebarLicenseInstitution">-</span></p>
+        <p><strong>授权编号：</strong><span id="sidebarLicenseCode">-</span></p>
+        <p><strong>授权版本：</strong><span id="sidebarLicenseVersion">-</span></p>
       </div>
 
       <nav class="menu">
@@ -1091,6 +1096,7 @@
 
   <div class="toast hidden" id="toast"></div>
 
+  <script src="../授权信息.js"></script>
   <script src="../js/dashboard/core/state.js"></script>
   <script src="../js/dashboard/core/utils.js"></script>
   <script src="../js/dashboard/modules/common.js"></script>
@@ -1109,3 +1115,6 @@
 </body>
 
 </html>
+
+
+

@@ -528,7 +528,7 @@
 }
 
 function applySystemShellCopy() {
-  document.title = "教培管理系统";
+  document.title = "轻课管教培课时管理系统";
 
   const brandTitle = document.querySelector(".brand-block h2");
   const brandSubTitle = document.querySelector(".brand-block p");
@@ -539,20 +539,27 @@ function applySystemShellCopy() {
   const bindBtn = refs.bindDataFileBtn;
   const syncBtn = refs.syncDataFileBtn;
   const status = refs.dataFileStatus;
+  const licenseInfo = window.RUNTIME_LICENSE_INFO || {};
+  const sidebarLicenseInstitution = document.getElementById("sidebarLicenseInstitution");
+  const sidebarLicenseCode = document.getElementById("sidebarLicenseCode");
+  const sidebarLicenseVersion = document.getElementById("sidebarLicenseVersion");
 
-  if (brandTitle) brandTitle.textContent = "教培管理系统";
+  if (brandTitle) brandTitle.textContent = "轻课管教培课时管理系统";
   if (brandSubTitle) {
     brandSubTitle.textContent = "";
     brandSubTitle.style.display = "none";
   }
   if (brandMark) {
-    brandMark.innerHTML = '<img src="../images/Logo.svg" alt="教培管理系统标识" class="brand-logo" />';
+    brandMark.innerHTML = '<img src="../images/Logo.svg" alt="轻课管教培课时管理系统标识" class="brand-logo" />';
   }
   if (logoutBtn) logoutBtn.textContent = "退出登录";
   if (exportBtn) exportBtn.textContent = "导出数据";
   if (importBtn) importBtn.textContent = "导入数据";
   if (bindBtn) bindBtn.textContent = "绑定数据文件";
   if (syncBtn) syncBtn.textContent = "从文件同步";
+  if (sidebarLicenseInstitution) sidebarLicenseInstitution.textContent = licenseInfo.institutionName || "未设置";
+  if (sidebarLicenseCode) sidebarLicenseCode.textContent = licenseInfo.licenseCode || "未设置";
+  if (sidebarLicenseVersion) sidebarLicenseVersion.textContent = licenseInfo.version || "未设置";
   if (status && !status.textContent.trim()) status.textContent = "未绑定数据文件";
 }
 
@@ -602,3 +609,6 @@ async function init() {
 }
 
 init();
+
+
+
