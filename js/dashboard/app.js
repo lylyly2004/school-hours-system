@@ -311,6 +311,11 @@
     const refundBtn = event.target.closest("[data-refund-student-id]");
     if (refundBtn) {
       updateStudentLifecycle(Number(refundBtn.dataset.refundStudentId), "refunded");
+      return;
+    }
+    const deleteStudentBtn = event.target.closest("[data-delete-student-id]");
+    if (deleteStudentBtn) {
+      deleteStudent(Number(deleteStudentBtn.dataset.deleteStudentId));
     }
   });
 

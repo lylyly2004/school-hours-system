@@ -1,4 +1,4 @@
-let currentClassListPage = 1;
+﻿let currentClassListPage = 1;
 const CLASS_LIST_PAGE_SIZE = 10;
 
 function getFilteredClasses(keyword = "") {
@@ -35,7 +35,7 @@ function canEditClass(item) {
 
 function getClassEditBlockReason(item) {
   if (getClassSessionCount(item.name) > 0) {
-    return "该班级已有上课记录";
+    return "该班级已有上课记录，不支持直接改名";
   }
   return "";
 }
@@ -178,7 +178,7 @@ function getClassUsageSummary(className) {
   };
 }
 
-function toggleClassStatus(classId) {
+async function toggleClassStatus(classId) {
   const target = classes.find((item) => Number(item.id) === Number(classId));
   if (!target) return;
 
@@ -186,7 +186,13 @@ function toggleClassStatus(classId) {
   const actionLabel = nextStatus === "inactive" ? "\u505C\u7528" : "\u542F\u7528";
   const usageInfo = getClassUsageSummary(target.name);
 
-  if (!window.confirm(`\u786E\u8BA4${actionLabel}\u73ED\u7EA7\u201C${target.name}\u201D\u5417\uFF1F\n\u5F53\u524D\u5173\u8054\u6570\u636E\uFF1A${usageInfo.message}`)) {
+  const confirmed = await openConfirmDialog({
+    title: "确认操作",
+    message: `确认${actionLabel}班级“${target.name}”吗？\n当前关联数据：${usageInfo.message}`,
+    confirmText: "确认",
+    cancelText: "取消"
+  });
+  if (!confirmed) {
     return;
   }
 
@@ -216,7 +222,7 @@ async function deleteClass(classId) {
     return;
   }
 
-  if (!await confirmDelete(`班级“${target.name}”`, `可删除条件已满足。\n当前关联数据：${usageInfo.message}`)) {
+  if (!await confirmDelete(`班级“${target.name}”`, `可删除条件已满足。` + "\n" + `当前关联数据：${usageInfo.message}`)) {
     return;
   }
 
@@ -312,3 +318,4 @@ async function editClass(classId) {
 
   showToast("\u73ED\u7EA7\u540D\u79F0\u5DF2\u66F4\u65B0");
 }
+

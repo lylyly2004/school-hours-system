@@ -57,13 +57,13 @@ function uid() {
   return Date.now() + Math.floor(Math.random() * 1000);
 }
 
-const LOCAL_DATA_STORAGE_KEY = "school-hours-system-data-v1";
-const LOCAL_DATA_BACKUP_KEY = "school-hours-system-backups-v1";
+const LOCAL_DATA_STORAGE_KEY = "school-hours-system-delivery-data-v1";
+const LOCAL_DATA_BACKUP_KEY = "school-hours-system-delivery-backups-v1";
 const LOCAL_DATA_BACKUP_LIMIT = 5;
-const DATA_FILE_DB_NAME = "school-hours-system-file-db";
+const DATA_FILE_DB_NAME = "school-hours-system-delivery-file-db";
 const DATA_FILE_STORE_NAME = "handles";
-const DATA_FILE_HANDLE_KEY = "main-data-file";
-const LOCAL_DATA_FILE_META_KEY = "school-hours-system-data-file-meta-v1";
+const DATA_FILE_HANDLE_KEY = "delivery-main-data-file";
+const LOCAL_DATA_FILE_META_KEY = "school-hours-system-delivery-file-meta-v1";
 
 function getPersistedStatePayload() {
   return {
@@ -818,7 +818,7 @@ function openConfirmDialog(options = {}) {
 
 function confirmDelete(label, extraMessage = "") {
   const message = extraMessage
-    ? `确认删除${label}吗？` + "`n" + extraMessage
+    ? `确认删除${label}吗？` + "\n" + extraMessage
     : `确认删除${label}吗？删除后将无法恢复。`;
 
   return openConfirmDialog({
@@ -828,3 +828,4 @@ function confirmDelete(label, extraMessage = "") {
     cancelText: "取消"
   });
 }
+

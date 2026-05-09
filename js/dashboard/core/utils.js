@@ -818,7 +818,7 @@ function openConfirmDialog(options = {}) {
 
 function confirmDelete(label, extraMessage = "") {
   const message = extraMessage
-    ? `确认删除${label}吗？` + "`n" + extraMessage
+    ? `确认删除${label}吗？` + "\n" + extraMessage
     : `确认删除${label}吗？删除后将无法恢复。`;
 
   return openConfirmDialog({

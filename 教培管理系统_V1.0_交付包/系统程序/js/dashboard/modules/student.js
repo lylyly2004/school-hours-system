@@ -601,7 +601,9 @@ function renderStudents(keyword = "") {
             : record.studentStatus === "active"
               ? `<button class="table-pause-btn" type="button" data-pause-student-id="${record.id}">\u505C\u8BFE</button>`
               : ""}
-          ${record.studentStatus !== "refunded" ? `<button class="table-refund-btn" type="button" data-refund-student-id="${record.id}">\u9000\u8D39</button>` : ""}
+          ${record.studentStatus !== "refunded"
+            ? `<button class="table-refund-btn" type="button" data-refund-student-id="${record.id}">\u9000\u8D39</button>`
+            : `<button class="table-refund-btn" type="button" data-delete-student-id="${record.id}">\u5220\u9664\u5B66\u5458</button>`}
         </td>
       </tr>
     `;
@@ -784,6 +786,7 @@ async function updateStudentLifecycle(recordId, nextStatus) {
   renderStudents(refs.studentSearch.value || "");
   renderEnrollmentRecords();
   renderBirthdayRecords();
+  renderClasses(refs.classSearch?.value || "");
   renderRenewalList();
   renderTransactions();
   renderSessionWorkspace();
@@ -795,4 +798,39 @@ async function updateStudentLifecycle(recordId, nextStatus) {
   } else {
     showToast("\u5B66\u5458\u5DF2\u9000\u8D39\uFF0C\u5269\u4F59\u8BFE\u65F6\u5DF2\u6E05\u96F6\uFF0C\u6D41\u6C34\u5DF2\u540C\u6B65\u3002");
   }
+}
+
+async function deleteStudent(recordId) {
+  const target = enrollmentRecords.find((item) => Number(item.id) === Number(recordId));
+  if (!target) return;
+
+  if ((target.studentStatus || "active") !== "refunded") {
+    showToast("\u4EC5\u652F\u6301\u5220\u9664\u5DF2\u9000\u8D39\u5B66\u5458\u3002");
+    return;
+  }
+
+  const confirmed = await confirmDelete(
+    `\u5B66\u5458\u201C${target.studentName}\u201D`,
+    "\u5220\u9664\u540E\u5C06\u4ECE\u5B66\u5458\u5217\u8868\u79FB\u9664\uff0c\u5386\u53F2\u4E0A\u8BFE\u8BB0\u5F55\u548C\u6D41\u6C34\u4F1A\u4FDD\u7559\u3002"
+  );
+  if (!confirmed) return;
+
+  enrollmentRecords = enrollmentRecords.filter((item) => Number(item.id) !== Number(recordId));
+
+  const sameNameExists = enrollmentRecords.some((item) => item.studentName === target.studentName);
+  if (!sameNameExists && Object.prototype.hasOwnProperty.call(birthdayNotes, target.studentName)) {
+    delete birthdayNotes[target.studentName];
+  }
+
+  if (Number(currentStudentDetailId) === Number(recordId)) {
+    closeStudentDetail();
+  }
+
+  renderStudents(refs.studentSearch.value || "");
+  renderEnrollmentRecords();
+  renderBirthdayRecords();
+  renderClasses(refs.classSearch?.value || "");
+  renderRenewalList();
+  renderSessionWorkspace();
+  showToast("\u5DF2\u9000\u8D39\u5B66\u5458\u6863\u6848\u5DF2\u5220\u9664\u3002");
 }

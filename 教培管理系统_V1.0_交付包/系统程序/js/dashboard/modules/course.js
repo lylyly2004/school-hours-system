@@ -46,7 +46,7 @@ function getCourseUsageSummary(courseName) {
   };
 }
 
-function toggleCourseStatus(courseId) {
+async function toggleCourseStatus(courseId) {
   const target = courses.find((item) => item.id === courseId);
   if (!target) return;
 
@@ -54,7 +54,13 @@ function toggleCourseStatus(courseId) {
   const actionLabel = nextStatus === "inactive" ? "\u505C\u7528" : "\u542F\u7528";
   const usageInfo = getCourseUsageSummary(target.name);
 
-  if (!window.confirm(`\u786E\u8BA4${actionLabel}\u5B66\u79D1\u7C7B\u522B\u201C${target.name}\u201D\u5417\uFF1F\n\u5F53\u524D\u5173\u8054\u6570\u636E\uFF1A${usageInfo.message}`)) {
+  const confirmed = await openConfirmDialog({
+    title: "确认操作",
+    message: `确认${actionLabel}学科类别“${target.name}”吗？\n当前关联数据：${usageInfo.message}`,
+    confirmText: "确认",
+    cancelText: "取消"
+  });
+  if (!confirmed) {
     return;
   }
 
